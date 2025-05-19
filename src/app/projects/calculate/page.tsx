@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { ProjectFormData, Material, Accessory, PrinterProfile, AccessoryInProject } from "@/types";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, FieldValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ const projectSchema = z.object({
   }),
   accesoriosUsadosEnProyecto: z.array(z.object({
     accesorioId: z.string().min(1, "Debe seleccionar un accesorio."),
-    cantidadUsadaPorPieza: z.coerce.number().positive("La cantidad debe ser positiva."),
+    cantidadUsadaPorPieza: z.coerce.number().int("La cantidad debe ser un número entero.").positive("La cantidad debe ser positiva."),
   })).optional(),
 });
 
@@ -331,7 +331,7 @@ export default function CalculateProjectPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Cantidad</FormLabel>
-                            <FormControl><Input type="number" step="0.1" placeholder="Ej: 1" {...field} /></FormControl>
+                            <FormControl><Input type="number" step="1" placeholder="Ej: 1" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -392,7 +392,7 @@ export default function CalculateProjectPage() {
                   ) : (
                     <div className="text-center py-8">
                       <Image 
-                        src="https://picsum.photos/300/200" 
+                        src="https://placehold.co/300x200.png" 
                         alt="Waiting for calculation" 
                         width={300}
                         height={200}
@@ -444,3 +444,38 @@ function ResultRow({ label, value, bold, primary, accent }: ResultRowProps) {
     );
 }
 
+type Project = {
+  id: string; // Firestore document ID
+  nombreProyecto: string;
+  fechaCreacion: Date;
+  fechaUltimoCalculo: Date;
+  
+  materialUsadoId: string;
+  configuracionImpresoraIdUsada: string;
+  
+  accesoriosUsadosEnProyecto: AccessoryInProject[];
+  
+  inputsOriginales: {
+    pesoPiezaGramos: number;
+    tiempoImpresionHoras: number;
+    tiempoPostProcesadoHoras?: number; // Opcional
+    cantidadPiezasLote: number; // Default: 1
+    margenGananciaDeseadoPorcentaje?: number; // Ej: 30% (input as 30)
+  };
+  
+  resultadosCalculados?: { // Snapshot of results
+    costoMaterialPieza: number;
+    costoElectricidadPieza: number;
+    costoAmortizacionPieza: number;
+    costoLaborOperativaPieza: number;
+    costoLaborPostProcesadoPieza: number;
+    costoTotalAccesoriosPieza: number;
+    subTotalCostoDirectoPieza: number;
+    costoContingenciaFallasPieza: number;
+    costoTotalPieza: number;
+    costoTotalLote: number;
+    precioVentaSugeridoPieza?: number;
+    precioVentaSugeridoLote?: number;
+  };
+  notasProyecto?: string;
+};
