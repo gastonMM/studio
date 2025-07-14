@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,14 +21,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { PlusCircle, Trash2, Loader2, CalculatorIcon } from "lucide-react";
+import Image from "next/image";
+import { calculateProjectCost } from "@/lib/calculation";
+
 // Mock actions for fetching data
 // import { fetchMaterials } from "@/app/materials/actions";
 // import { fetchAccessories } from "@/app/accessories/actions"; // Assuming this exists
 // import { fetchPrinterProfiles } from "@/app/printer-profiles/actions"; // Assuming this exists
-import { PlusCircle, Trash2, Loader2, CalculatorIcon } from "lucide-react";
-import Image from "next/image";
 
-const projectSchema = z.object({
+
+export const projectSchema = z.object({
   nombreProyecto: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
   materialUsadoId: z.string().min(1, "Debe seleccionar un material."),
   configuracionImpresoraIdUsada: z.string().min(1, "Debe seleccionar un perfil de impresora."),
@@ -73,9 +77,9 @@ export default function CalculateProjectPage() {
   // useEffect(() => {
   //   // Fetch initial data for dropdowns
   //   async function loadData() {
-  //     setMaterials(await fetchMaterials() || []);
-  //     setAccessories(await fetchAccessories() || []);
-  //     setPrinterProfiles(await fetchPrinterProfiles() || []);
+  //     // setMaterials(await fetchMaterials() || []);
+  //     // setAccessories(await fetchAccessories() || []);
+  //     // setPrinterProfiles(await fetchPrinterProfiles() || []);
   //   }
   //   loadData();
   // }, []);
@@ -101,60 +105,22 @@ export default function CalculateProjectPage() {
     control: form.control,
     name: "accesoriosUsadosEnProyecto",
   });
-
-  function performCalculation(values: z.infer<typeof projectSchema>) {
-    const material = materials.find(m => m.id === values.materialUsadoId);
-    const profile = printerProfiles.find(p => p.id === values.configuracionImpresoraIdUsada);
-
-    if (!material || !profile) {
-      toast({ title: "Error de datos", description: "Material o perfil de impresora no encontrado.", variant: "destructive" });
-      return null;
-    }
-
-    const { pesoPiezaGramos, tiempoImpresionHoras, tiempoPostProcesadoHoras = 0, cantidadPiezasLote, margenGananciaDeseadoPorcentaje = 0 } = values.inputsOriginales;
-
-    const costoMaterialPieza = (material.costoPorKg / 1000) * pesoPiezaGramos;
-    const costoElectricidadPieza = ((profile.consumoEnergeticoImpresoraWatts || 0) / 1000) * tiempoImpresionHoras * (profile.costoKWhElectricidad || 0);
-    const tasaAmortizacion = (profile.costoAdquisicionImpresora || 0) / (profile.vidaUtilEstimadaHorasImpresora || 1); // Avoid division by zero
-    const costoAmortizacionPieza = tasaAmortizacion * tiempoImpresionHoras;
-    const costoLaborOperativaPieza = (profile.costoHoraLaborOperativa || 0) * tiempoImpresionHoras;
-    const costoLaborPostProcesadoPieza = (profile.costoHoraLaborPostProcesado || 0) * tiempoPostProcesadoHoras;
-
-    let costoTotalAccesoriosPieza = 0;
-    values.accesoriosUsadosEnProyecto?.forEach(accInput => {
-      const accDetails = accessories.find(a => a.id === accInput.accesorioId);
-      if (accDetails) {
-        costoTotalAccesoriosPieza += (accDetails.costoPorUnidad || 0) * accInput.cantidadUsadaPorPieza;
-      }
-    });
-
-    const subTotalCostoDirectoPieza = costoMaterialPieza + costoElectricidadPieza + costoAmortizacionPieza + costoLaborOperativaPieza + costoLaborPostProcesadoPieza + costoTotalAccesoriosPieza;
-    const costoContingenciaFallasPieza = subTotalCostoDirectoPieza * ((profile.porcentajeFallasEstimado || 0) / 100);
-    const costoTotalPieza = subTotalCostoDirectoPieza + costoContingenciaFallasPieza;
-    const costoTotalLote = costoTotalPieza * cantidadPiezasLote;
-    
-    const precioVentaSugeridoPieza = costoTotalPieza * (1 + (margenGananciaDeseadoPorcentaje / 100));
-    const precioVentaSugeridoLote = costoTotalLote * (1 + (margenGananciaDeseadoPorcentaje / 100));
-
-    return {
-      costoMaterialPieza, costoElectricidadPieza, costoAmortizacionPieza, costoLaborOperativaPieza, costoLaborPostProcesadoPieza,
-      costoTotalAccesoriosPieza, subTotalCostoDirectoPieza, costoContingenciaFallasPieza, costoTotalPieza, costoTotalLote,
-      precioVentaSugeridoPieza, precioVentaSugeridoLote
-    };
-  }
   
   async function onCalculate(values: z.infer<typeof projectSchema>) {
-     const results = performCalculation(values);
+     const results = calculateProjectCost(values, materials, printerProfiles, accessories);
      if (results) {
         setCalculatedResults(results);
         toast({ title: "Cálculo realizado", description: "Los costos han sido estimados." });
+     } else {
+        toast({ title: "Error de datos", description: "Material, perfil de impresora o accesorio no encontrado.", variant: "destructive" });
      }
   }
 
   async function onSave(values: z.infer<typeof projectSchema>) {
     setIsSubmitting(true);
-    const results = performCalculation(values);
+    const results = calculateProjectCost(values, materials, printerProfiles, accessories);
     if (!results) {
+        toast({ title: "Error de datos", description: "No se puede guardar, verifique que los datos sean correctos (material, perfil, accesorios).", variant: "destructive" });
         setIsSubmitting(false);
         return;
     }
