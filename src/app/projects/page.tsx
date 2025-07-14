@@ -27,7 +27,7 @@ export default function SavedProjectsPage() {
         </CardHeader>
         <CardContent className="text-center py-12">
           <Image 
-                src="https://picsum.photos/600/300" 
+                src="https://picsum.photos/seed/documents/600/300" 
                 alt="Project files and folders" 
                 width={600}
                 height={300}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { ProjectFormData, Material, Accessory, PrinterProfile, AccessoryInProject } from "@/types";
+import type { ProjectFormData, Material, Accessory, PrinterProfile, AccessoryInProject, Project } from "@/types";
 import { useForm, useFieldArray, FieldValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -392,7 +392,7 @@ export default function CalculateProjectPage() {
                   ) : (
                     <div className="text-center py-8">
                       <Image 
-                        src="https://placehold.co/300x200.png" 
+                        src="https://picsum.photos/seed/calculator/300/200" 
                         alt="Waiting for calculation" 
                         width={300}
                         height={200}
@@ -443,39 +443,3 @@ function ResultRow({ label, value, bold, primary, accent }: ResultRowProps) {
         </div>
     );
 }
-
-type Project = {
-  id: string; // Firestore document ID
-  nombreProyecto: string;
-  fechaCreacion: Date;
-  fechaUltimoCalculo: Date;
-  
-  materialUsadoId: string;
-  configuracionImpresoraIdUsada: string;
-  
-  accesoriosUsadosEnProyecto: AccessoryInProject[];
-  
-  inputsOriginales: {
-    pesoPiezaGramos: number;
-    tiempoImpresionHoras: number;
-    tiempoPostProcesadoHoras?: number; // Opcional
-    cantidadPiezasLote: number; // Default: 1
-    margenGananciaDeseadoPorcentaje?: number; // Ej: 30% (input as 30)
-  };
-  
-  resultadosCalculados?: { // Snapshot of results
-    costoMaterialPieza: number;
-    costoElectricidadPieza: number;
-    costoAmortizacionPieza: number;
-    costoLaborOperativaPieza: number;
-    costoLaborPostProcesadoPieza: number;
-    costoTotalAccesoriosPieza: number;
-    subTotalCostoDirectoPieza: number;
-    costoContingenciaFallasPieza: number;
-    costoTotalPieza: number;
-    costoTotalLote: number;
-    precioVentaSugeridoPieza?: number;
-    precioVentaSugeridoLote?: number;
-  };
-  notasProyecto?: string;
-};

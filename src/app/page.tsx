@@ -70,7 +70,7 @@ export default function DashboardPage() {
             </ul>
              <div className="aspect-video relative rounded-md overflow-hidden">
               <Image 
-                src="https://placehold.co/800x450.png" 
+                src="https://picsum.photos/seed/printer/800/450" 
                 alt="3D Printer in action" 
                 layout="fill"
                 objectFit="cover"
@@ -89,7 +89,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
              <Image 
-                src="https://placehold.co/800x400.png" 
+                src="https://picsum.photos/seed/blueprint/800/400" 
                 alt="Future features concept" 
                 width={800}
                 height={400}

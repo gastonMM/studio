@@ -42,7 +42,7 @@ export default function PrinterProfilesPage() {
         </CardHeader>
         <CardContent>
             <Image 
-                src="https://picsum.photos/600/350" 
+                src="https://picsum.photos/seed/diagram/600/350" 
                 alt="3D printer settings" 
                 width={600}
                 height={350}

@@ -27,7 +27,7 @@ export default function AccessoriesPage() {
         </CardHeader>
         <CardContent className="text-center py-12">
             <Image 
-                src="https://picsum.photos/600/300" 
+                src="https://picsum.photos/seed/tools/600/300" 
                 alt="Accessories for 3D printing" 
                 width={600}
                 height={300}
