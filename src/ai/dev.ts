@@ -1,4 +1,5 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/fetch-price-from-url.ts';
+// No flows are defined yet.
+// You can create new flows in the src/ai/flows directory.

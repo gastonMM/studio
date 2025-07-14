@@ -21,7 +21,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 // import { saveMaterialAction } from "../actions"; // Server action
-import { fetchPriceFromURL } from "@/ai/flows/fetch-price-from-url";
 import { Loader2 } from "lucide-react";
 
 const materialSchema = z.object({
@@ -43,7 +42,6 @@ export function MaterialForm({ material }: MaterialFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
 
   const form = useForm<MaterialFormData>({
     resolver: zodResolver(materialSchema),
@@ -81,31 +79,6 @@ export function MaterialForm({ material }: MaterialFormProps) {
       setIsSubmitting(false);
     }
   }
-
-  const handleFetchPrice = async () => {
-    const url = form.getValues("urlProducto");
-    if (!url) {
-      toast({ title: "URL Requerida", description: "Por favor, ingrese una URL de producto.", variant: "destructive" });
-      return;
-    }
-    setIsFetchingPrice(true);
-    try {
-      const result = await fetchPriceFromURL({ url });
-      if (result && result.price !== undefined) {
-        const pesoSpoolGramos = form.getValues("pesoSpoolCompradoGramos") || 1000;
-        const costoKg = (result.price / pesoSpoolGramos) * 1000;
-        form.setValue("costoPorKg", parseFloat(costoKg.toFixed(2)));
-        toast({ title: "Precio Obtenido", description: `Precio sugerido: ${result.price.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}. Costo/kg calculado: ${costoKg.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}` });
-      } else {
-        toast({ title: "Error al obtener precio", description: "No se pudo obtener el precio. Por favor, ingréselo manualmente.", variant: "default" });
-      }
-    } catch (error) {
-      console.error("Error fetching price:", error);
-      toast({ title: "Error", description: "Ocurrió un error al contactar el servicio de precios.", variant: "destructive" });
-    } finally {
-      setIsFetchingPrice(false);
-    }
-  };
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -165,16 +138,10 @@ export function MaterialForm({ material }: MaterialFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>URL del Producto (Opcional)</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Input placeholder="https://link_al_producto" {...field} />
-                    </FormControl>
-                    <Button type="button" onClick={handleFetchPrice} disabled={isFetchingPrice || !field.value} variant="outline">
-                      {isFetchingPrice ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      Obtener Precio
-                    </Button>
-                  </div>
-                  <FormDescription>Link para obtener/actualizar precio automáticamente (experimental).</FormDescription>
+                  <FormControl>
+                    <Input placeholder="https://link_al_producto" {...field} />
+                  </FormControl>
+                  <FormDescription>Link de referencia del producto.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
