@@ -17,7 +17,7 @@ export interface Accessory {
   nombreAccesorio: string;
   costoPorUnidad: number; // ARS (calculado o ingresado)
   urlProducto?: string; // Link a la página donde se compra
-  unidadesPorPaqueteEnLink: number; // Default: 1
+  unidadesPorPaqueteEnLink?: number; // Default: 1
   precioPaqueteObtenido?: number; // ARS (obtenido de URL o manual)
   selectorPrecioCSS?: string; // Opcional
   fechaUltimaActualizacionCosto: Date; // Timestamp
@@ -85,6 +85,6 @@ export interface Project {
 
 // For react-hook-form, partial types are often useful
 export type MaterialFormData = Omit<Material, 'id' | 'fechaUltimaActualizacionCosto'> & { id?: string };
-export type AccessoryFormData = Omit<Accessory, 'id' | 'fechaUltimaActualizacionCosto' | 'costoPorUnidad'> & { id?: string };
+export type AccessoryFormData = Omit<Accessory, 'id' | 'fechaUltimaActualizacionCosto'> & { id?: string };
 export type PrinterProfileFormData = Omit<PrinterProfile, 'id' | 'fechaUltimaActualizacionConfig' | 'tasaAmortizacionImpresoraPorHoraUso'> & { id?: string };
 export type ProjectFormData = Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo' | 'resultadosCalculados'> & { id?: string };

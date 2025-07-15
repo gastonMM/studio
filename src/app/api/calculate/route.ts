@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { calculateProjectCost } from '@/lib/calculation';
 import { fetchMaterials } from '@/app/materials/actions';
-// Mock data fetching for accessories and printer profiles for now
-import type { Accessory, PrinterProfile } from '@/types';
+import { fetchAccessories } from '@/app/accessories/actions';
+import type { PrinterProfile } from '@/types';
 
 const webhookSchema = z.object({
   materialId: z.string(),
@@ -19,17 +19,10 @@ const webhookSchema = z.object({
 });
 
 // Mocked data as actions for these don't exist yet
-const mockAccessories: Accessory[] = [
-  { id: "acc1", nombreAccesorio: "Argolla Llavero", costoPorUnidad: 50, unidadesPorPaqueteEnLink:100, fechaUltimaActualizacionCosto: new Date() },
-  { id: "acc2", nombreAccesorio: "Iman Neodimio", costoPorUnidad: 200, unidadesPorPaqueteEnLink:10, fechaUltimaActualizacionCosto: new Date() },
-];
 const mockPrinterProfiles: PrinterProfile[] = [
   { id: "pp1", nombrePerfilImpresora: "Ender 3 Pro - Standard", consumoEnergeticoImpresoraWatts: 200, costoKWhElectricidad: 40, costoAdquisicionImpresora: 1200000, vidaUtilEstimadaHorasImpresora: 4000, porcentajeFallasEstimado: 5, costoHoraLaborOperativa: 2500, costoHoraLaborPostProcesado: 2000, fechaUltimaActualizacionConfig: new Date() },
 ];
 
-async function fetchAccessories(): Promise<Accessory[]> {
-    return mockAccessories;
-}
 async function fetchPrinterProfiles(): Promise<PrinterProfile[]> {
     return mockPrinterProfiles;
 }

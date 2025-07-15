@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import type { ProjectFormData, Material, Accessory, PrinterProfile, AccessoryInProject, Project } from "@/types";
-import { useForm, useFieldArray, FieldValues } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -25,11 +25,9 @@ import { PlusCircle, Trash2, Loader2, CalculatorIcon } from "lucide-react";
 import Image from "next/image";
 import { calculateProjectCost } from "@/lib/calculation";
 
-// Mock actions for fetching data
-// import { fetchMaterials } from "@/app/materials/actions";
-// import { fetchAccessories } from "@/app/accessories/actions"; // Assuming this exists
-// import { fetchPrinterProfiles } from "@/app/printer-profiles/actions"; // Assuming this exists
-
+// Import server actions
+import { fetchMaterials } from "@/app/materials/actions";
+import { fetchAccessories } from "@/app/accessories/actions";
 
 export const projectSchema = z.object({
   nombreProyecto: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
@@ -48,20 +46,10 @@ export const projectSchema = z.object({
   })).optional(),
 });
 
-
 // Mock data - replace with actual fetched data
-const mockMaterials: Material[] = [
-  { id: "1", nombreMaterial: "PLA Blanco", costoPorKg: 15000, pesoSpoolCompradoGramos: 1000, fechaUltimaActualizacionCosto: new Date() },
-  { id: "2", nombreMaterial: "PETG Negro", costoPorKg: 22000, pesoSpoolCompradoGramos: 1000, fechaUltimaActualizacionCosto: new Date() },
-];
-const mockAccessories: Accessory[] = [
-  { id: "acc1", nombreAccesorio: "Argolla Llavero", costoPorUnidad: 50, unidadesPorPaqueteEnLink:100, fechaUltimaActualizacionCosto: new Date() },
-  { id: "acc2", nombreAccesorio: "Iman Neodimio", costoPorUnidad: 200, unidadesPorPaqueteEnLink:10, fechaUltimaActualizacionCosto: new Date() },
-];
 const mockPrinterProfiles: PrinterProfile[] = [
   { id: "pp1", nombrePerfilImpresora: "Ender 3 Pro - Standard", consumoEnergeticoImpresoraWatts: 200, costoKWhElectricidad: 40, costoAdquisicionImpresora: 1200000, vidaUtilEstimadaHorasImpresora: 4000, porcentajeFallasEstimado: 5, costoHoraLaborOperativa: 2500, costoHoraLaborPostProcesado: 2000, fechaUltimaActualizacionConfig: new Date() },
 ];
-
 
 export default function CalculateProjectPage() {
   const { toast } = useToast();
@@ -70,19 +58,26 @@ export default function CalculateProjectPage() {
   const [calculatedResults, setCalculatedResults] = useState<Project["resultadosCalculados"] | null>(null);
   
   // State for fetched data
-  const [materials, setMaterials] = useState<Material[]>(mockMaterials);
-  const [accessories, setAccessories] = useState<Accessory[]>(mockAccessories);
-  const [printerProfiles, setPrinterProfiles] = useState<PrinterProfile[]>(mockPrinterProfiles);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [accessories, setAccessories] = useState<Accessory[]>([]);
+  const [printerProfiles, setPrinterProfiles] = useState<PrinterProfile[]>(mockPrinterProfiles); // Still mocked for now
 
-  // useEffect(() => {
-  //   // Fetch initial data for dropdowns
-  //   async function loadData() {
-  //     // setMaterials(await fetchMaterials() || []);
-  //     // setAccessories(await fetchAccessories() || []);
-  //     // setPrinterProfiles(await fetchPrinterProfiles() || []);
-  //   }
-  //   loadData();
-  // }, []);
+  useEffect(() => {
+    // Fetch initial data for dropdowns
+    async function loadData() {
+      try {
+        const [materialsData, accessoriesData] = await Promise.all([
+          fetchMaterials(),
+          fetchAccessories()
+        ]);
+        setMaterials(materialsData || []);
+        setAccessories(accessoriesData || []);
+      } catch (error) {
+        toast({ title: "Error", description: "No se pudieron cargar los datos maestros.", variant: "destructive" });
+      }
+    }
+    loadData();
+  }, [toast]);
 
   const form = useForm<z.infer<typeof projectSchema>>({
     resolver: zodResolver(projectSchema),
@@ -358,7 +353,7 @@ export default function CalculateProjectPage() {
                   ) : (
                     <div className="text-center py-8">
                       <Image 
-                        src="https://picsum.photos/seed/calculator/300/200" 
+                        src="https://picsum.photos/seed/calculator/300/200"
                         alt="Waiting for calculation" 
                         width={300}
                         height={200}
