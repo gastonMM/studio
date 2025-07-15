@@ -18,6 +18,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { deleteProjectAction } from "../actions";
@@ -65,23 +72,52 @@ export function ProjectList({ projects }: ProjectListProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {projects.map((project) => (
         <Card key={project.id} className="flex flex-col">
-          <CardHeader>
-            <div className="aspect-[4/3] relative mb-4">
-              <Image
-                src={project.imageUrl || "https://placehold.co/400x300.png"}
-                alt={project.nombreProyecto}
-                layout="fill"
-                objectFit="cover"
-                data-ai-hint="product 3d model"
-                className="rounded-lg"
-              />
+          <CardHeader className="p-0">
+             <Carousel className="w-full rounded-t-lg overflow-hidden">
+              <CarouselContent>
+                {project.imageUrls && project.imageUrls.length > 0 ? (
+                  project.imageUrls.map((url, index) => (
+                    <CarouselItem key={index}>
+                      <div className="aspect-[4/3] relative">
+                        <Image
+                          src={url}
+                          alt={`${project.nombreProyecto} - Imagen ${index + 1}`}
+                          layout="fill"
+                          objectFit="cover"
+                          data-ai-hint="product 3d model"
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))
+                ) : (
+                  <CarouselItem>
+                    <div className="aspect-[4/3] relative bg-muted">
+                      <Image
+                        src="https://placehold.co/400x300.png"
+                        alt={project.nombreProyecto}
+                        layout="fill"
+                        objectFit="cover"
+                        data-ai-hint="product 3d model"
+                      />
+                    </div>
+                  </CarouselItem>
+                )}
+              </CarouselContent>
+              {project.imageUrls && project.imageUrls.length > 1 && (
+                <>
+                  <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+                  <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
+                </>
+              )}
+            </Carousel>
+            <div className="p-6">
+              <CardTitle>{project.nombreProyecto}</CardTitle>
+              <CardDescription>
+                  Creado el {new Date(project.fechaCreacion).toLocaleDateString()}
+              </CardDescription>
             </div>
-            <CardTitle>{project.nombreProyecto}</CardTitle>
-             <CardDescription>
-                Creado el {new Date(project.fechaCreacion).toLocaleDateString()}
-            </CardDescription>
           </CardHeader>
-          <CardContent className="flex-grow space-y-2">
+          <CardContent className="flex-grow space-y-2 px-6">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Costo Total (Pieza):</span>
               <Badge variant="secondary">
@@ -95,7 +131,7 @@ export function ProjectList({ projects }: ProjectListProps) {
                </Badge>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end gap-2 pt-4">
+          <CardFooter className="flex justify-end gap-2 p-6 pt-4">
             <Button variant="outline" size="icon" asChild>
               <Link href={`/projects/edit/${project.id}`} title="Recalcular/Editar">
                 <Edit className="h-4 w-4" />

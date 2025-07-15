@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { PlusCircle, Trash2, Loader2, CalculatorIcon, Upload } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, CalculatorIcon, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { calculateProjectCost } from "@/lib/calculation";
 
@@ -38,7 +38,7 @@ const hhmmToHours = (hhmm: string): number => {
 
 export const projectSchema = z.object({
   nombreProyecto: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
-  imageUrl: z.string().optional().or(z.literal('')), // Now accepts data URLs
+  imageUrls: z.array(z.string()).optional(),
   materialUsadoId: z.string().min(1, "Debe seleccionar un material."),
   configuracionImpresoraIdUsada: z.string().min(1, "Debe seleccionar un perfil de impresora."),
   inputsOriginales: z.object({
@@ -91,7 +91,7 @@ export default function CalculateProjectPage() {
     resolver: zodResolver(projectSchema),
     defaultValues: {
       nombreProyecto: "",
-      imageUrl: "",
+      imageUrls: [],
       materialUsadoId: "",
       configuracionImpresoraIdUsada: "pp1", // Default to Ender 3
       inputsOriginales: {
@@ -110,21 +110,32 @@ export default function CalculateProjectPage() {
     control: form.control,
     name: "accesoriosUsadosEnProyecto",
   });
+  
+  const { fields: imageFields, append: appendImage, remove: removeImage } = useFieldArray({
+    control: form.control,
+    name: "imageUrls"
+  });
 
-  const imageUrl = form.watch("imageUrl");
+  const imageUrls = form.watch("imageUrls");
   
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        toast({ title: "Error", description: "La imagen no puede pesar más de 2MB.", variant: "destructive" });
-        return;
+    const files = event.target.files;
+    if (files) {
+      for (const file of Array.from(files)) {
+        if (file.size > 2 * 1024 * 1024) { // 2MB limit
+          toast({ title: "Error", description: `La imagen ${file.name} pesa más de 2MB.`, variant: "destructive" });
+          continue;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          appendImage({ value: reader.result as string } as any); // react-hook-form uses objects
+        };
+        reader.readAsDataURL(file);
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        form.setValue("imageUrl", reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    }
+     // Reset file input to allow re-uploading the same file
+    if(fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -162,6 +173,7 @@ export default function CalculateProjectPage() {
 
     const projectToSave: Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo'> & { id?: string } = {
       ...values,
+      imageUrls: values.imageUrls,
       inputsOriginales: {
         ...values.inputsOriginales,
         tiempoImpresionHoras: hhmmToHours(values.inputsOriginales.tiempoImpresionHoras),
@@ -220,32 +232,55 @@ export default function CalculateProjectPage() {
                   />
 
                   <FormItem>
-                    <FormLabel>Imagen del Proyecto</FormLabel>
-                    <Card>
-                        <CardContent className="p-4 flex flex-col items-center gap-4">
-                            <div className="aspect-video relative w-full max-w-sm bg-muted rounded-md overflow-hidden flex items-center justify-center">
-                               {imageUrl ? (
-                                   <Image 
-                                       src={imageUrl} 
-                                       alt="Vista previa del proyecto" 
-                                       layout="fill"
-                                       objectFit="contain"
-                                   />
-                               ) : (
-                                   <div className="text-center text-muted-foreground p-4">
-                                       <Upload className="mx-auto h-10 w-10 mb-2"/>
-                                       <p>Sube una imagen</p>
-                                   </div>
-                               )}
-                           </div>
+                    <FormLabel>Imágenes del Proyecto</FormLabel>
+                     <Card>
+                        <CardContent className="p-4 space-y-4">
+                           {imageUrls && imageUrls.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                              {imageUrls.map((url, index) => (
+                                <div key={index} className="relative aspect-square group">
+                                  <Image
+                                    src={url}
+                                    alt={`Vista previa del proyecto ${index + 1}`}
+                                    layout="fill"
+                                    objectFit="cover"
+                                    className="rounded-md"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => removeImage(index)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                    <span className="sr-only">Eliminar imagen</span>
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                               <div className="flex flex-col items-center justify-center h-32 bg-muted rounded-md text-center text-muted-foreground p-4">
+                                   <Upload className="mx-auto h-10 w-10 mb-2"/>
+                                   <p>Sube una o más imágenes</p>
+                               </div>
+                           )}
+                           
                             <FormControl>
-                                <Input type="file" accept="image/png, image/jpeg, image/webp" className="hidden" ref={fileInputRef} onChange={handleImageUpload} />
+                                <Input 
+                                  type="file" 
+                                  accept="image/png, image/jpeg, image/webp" 
+                                  className="hidden" 
+                                  ref={fileInputRef} 
+                                  onChange={handleImageUpload}
+                                  multiple
+                                />
                             </FormControl>
-                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
                                 <Upload className="mr-2 h-4 w-4" />
-                                Seleccionar Imagen
+                                Seleccionar Imágenes
                             </Button>
-                            <FormDescription>La imagen se guardará como parte del proyecto en el catálogo.</FormDescription>
+                            <FormDescription>Puedes subir varias imágenes para el catálogo. Límite de 2MB por imagen.</FormDescription>
                         </CardContent>
                     </Card>
                     <FormMessage />
@@ -496,5 +531,3 @@ function ResultRow({ label, value, bold, primary, accent }: ResultRowProps) {
         </div>
     );
 }
-
-    
