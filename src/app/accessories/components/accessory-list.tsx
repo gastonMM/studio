@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, ExternalLink, Wrench } from "lucide-react";
 import Link from "next/link";
@@ -62,10 +63,10 @@ export function AccessoryList({ accessories }: AccessoryListProps) {
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
-            <TableHead>Costo/Unidad (ARS)</TableHead>
-            <TableHead>Unidades/Paquete</TableHead>
+            <TableHead className="text-right">Costo/Unidad (ARS)</TableHead>
+            <TableHead className="text-right">Precio Paquete</TableHead>
+            <TableHead className="text-right">Unidades/Paquete</TableHead>
             <TableHead>URL Producto</TableHead>
-            <TableHead>Últ. Act.</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -73,8 +74,13 @@ export function AccessoryList({ accessories }: AccessoryListProps) {
           {accessories.map((accessory) => (
             <TableRow key={accessory.id}>
               <TableCell className="font-medium">{accessory.nombreAccesorio}</TableCell>
-              <TableCell>{accessory.costoPorUnidad.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</TableCell>
-              <TableCell>{accessory.unidadesPorPaqueteEnLink ?? '-'}</TableCell>
+              <TableCell className="text-right">
+                 <Badge variant="secondary">
+                    {accessory.costoPorUnidad.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                 </Badge>
+              </TableCell>
+              <TableCell className="text-right">{accessory.precioPaqueteObtenido.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</TableCell>
+              <TableCell className="text-right">{accessory.unidadesPorPaqueteEnLink ?? '-'}</TableCell>
               <TableCell>
                 {accessory.urlProducto ? (
                   <a href={accessory.urlProducto} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center">
@@ -84,7 +90,6 @@ export function AccessoryList({ accessories }: AccessoryListProps) {
                   '-'
                 )}
               </TableCell>
-              <TableCell>{new Date(accessory.fechaUltimaActualizacionCosto).toLocaleDateString()}</TableCell>
               <TableCell className="text-right space-x-2">
                 <Button variant="outline" size="icon" asChild>
                   <Link href={`/accessories/edit/${accessory.id}`}>

@@ -20,15 +20,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { saveAccessoryAction } from "../actions";
 import { Loader2 } from "lucide-react";
 
 const accessorySchema = z.object({
   nombreAccesorio: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
-  costoPorUnidad: z.coerce.number().positive("El costo debe ser un número positivo."),
+  precioPaqueteObtenido: z.coerce.number().positive("El precio debe ser un número positivo."),
+  unidadesPorPaqueteEnLink: z.coerce.number().int().positive("Las unidades deben ser un número entero positivo."),
   urlProducto: z.string().url("Debe ser una URL válida.").optional().or(z.literal('')),
-  unidadesPorPaqueteEnLink: z.coerce.number().int().positive("Debe ser un entero positivo.").optional(),
   notasAdicionales: z.string().optional(),
 });
 
@@ -40,17 +40,32 @@ export function AccessoryForm({ accessory }: AccessoryFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [calculatedCost, setCalculatedCost] = useState<number | null>(null);
 
   const form = useForm<AccessoryFormData>({
     resolver: zodResolver(accessorySchema),
-    defaultValues: accessory || {
+    defaultValues: accessory ? {
+        ...accessory
+    } : {
       nombreAccesorio: "",
-      costoPorUnidad: 0,
-      urlProducto: "",
+      precioPaqueteObtenido: 0,
       unidadesPorPaqueteEnLink: 1,
+      urlProducto: "",
       notasAdicionales: "",
     },
   });
+
+  const watchPrice = form.watch("precioPaqueteObtenido");
+  const watchUnits = form.watch("unidadesPorPaqueteEnLink");
+
+  useEffect(() => {
+    if (watchPrice > 0 && watchUnits > 0) {
+      setCalculatedCost(watchPrice / watchUnits);
+    } else {
+      setCalculatedCost(null);
+    }
+  }, [watchPrice, watchUnits]);
+
 
   async function onSubmit(values: AccessoryFormData) {
     setIsSubmitting(true);
@@ -85,7 +100,7 @@ export function AccessoryForm({ accessory }: AccessoryFormProps) {
                 <FormItem>
                   <FormLabel>Nombre del Accesorio</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej: Imán de Neodimio 6x2mm" {...field} />
+                    <Input placeholder="Ej: Cadenas para llavero" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -95,13 +110,14 @@ export function AccessoryForm({ accessory }: AccessoryFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name="costoPorUnidad"
+                name="precioPaqueteObtenido"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Costo por Unidad (ARS)</FormLabel>
+                    <FormLabel>Precio del Paquete (ARS)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="Ej: 200.00" {...field} />
+                      <Input type="number" step="0.01" placeholder="Ej: 5000.00" {...field} />
                     </FormControl>
+                     <FormDescription>El costo total del paquete que compras.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -115,13 +131,22 @@ export function AccessoryForm({ accessory }: AccessoryFormProps) {
                     <FormControl>
                       <Input type="number" step="1" placeholder="Ej: 100" {...field} />
                     </FormControl>
-                    <FormDescription>Si se compra por paquete.</FormDescription>
+                    <FormDescription>Cantidad de items en el paquete.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
             
+            {calculatedCost !== null && (
+                <div className="p-3 bg-muted rounded-md text-center">
+                    <p className="text-sm text-muted-foreground">Costo por unidad calculado:</p>
+                    <p className="text-lg font-semibold text-primary">
+                        {calculatedCost.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                    </p>
+                </div>
+            )}
+
             <FormField
               control={form.control}
               name="urlProducto"

@@ -6,8 +6,8 @@ import { revalidatePath } from "next/cache";
 
 // This is a mock store. In a real application, you'd use Firestore.
 let accessoriesDB: Accessory[] = [
-  { id: "acc1", nombreAccesorio: "Argolla Llavero", costoPorUnidad: 50, unidadesPorPaqueteEnLink: 100, fechaUltimaActualizacionCosto: new Date() },
-  { id: "acc2", nombreAccesorio: "Iman Neodimio 6x2mm", costoPorUnidad: 200, unidadesPorPaqueteEnLink: 10, fechaUltimaActualizacionCosto: new Date() },
+  { id: "acc1", nombreAccesorio: "Argolla Llavero", costoPorUnidad: 0.5, unidadesPorPaqueteEnLink: 100, precioPaqueteObtenido: 50, fechaUltimaActualizacionCosto: new Date() },
+  { id: "acc2", nombreAccesorio: "Iman Neodimio 6x2mm", costoPorUnidad: 20, unidadesPorPaqueteEnLink: 10, precioPaqueteObtenido: 200, fechaUltimaActualizacionCosto: new Date() },
 ];
 let nextId = 3;
 
@@ -22,9 +22,12 @@ export async function fetchAccessoryById(id: string): Promise<Accessory | undefi
 }
 
 export async function saveAccessoryAction(formData: AccessoryFormData, accessoryId?: string) {
-  if (!formData.nombreAccesorio || formData.costoPorUnidad <= 0) {
+  if (!formData.nombreAccesorio || formData.precioPaqueteObtenido <= 0 || formData.unidadesPorPaqueteEnLink <= 0) {
     return { success: false, error: "Datos inválidos." };
   }
+
+  // Calculate cost per unit
+  const costoPorUnidad = formData.precioPaqueteObtenido / formData.unidadesPorPaqueteEnLink;
 
   if (accessoryId) {
     // Update existing
@@ -33,6 +36,7 @@ export async function saveAccessoryAction(formData: AccessoryFormData, accessory
       accessoriesDB[index] = { 
         ...accessoriesDB[index], 
         ...formData,
+        costoPorUnidad,
         fechaUltimaActualizacionCosto: new Date(),
       };
     } else {
@@ -43,6 +47,7 @@ export async function saveAccessoryAction(formData: AccessoryFormData, accessory
     const newAccessory: Accessory = {
       id: `acc${nextId++}`,
       ...formData,
+      costoPorUnidad,
       fechaUltimaActualizacionCosto: new Date(),
     };
     accessoriesDB.push(newAccessory);
