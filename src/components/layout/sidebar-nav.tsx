@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -8,7 +9,7 @@ import {
   Wrench, // For Accessories
   Printer, // For Printer Profiles
   Calculator, // For New Calculation
-  FileText, // For Saved Projects
+  BookOpen, // For Catalog
   Settings, // For Settings/Configuration (general, if needed later)
 } from "lucide-react";
 
@@ -25,7 +26,7 @@ const navItems = [
   { href: "/accessories", label: "Accesorios", icon: Wrench },
   { href: "/printer-profiles", label: "Perfiles Impresora", icon: Printer },
   { href: "/projects/calculate", label: "Nueva Calculación", icon: Calculator },
-  { href: "/projects", label: "Proyectos Guardados", icon: FileText },
+  { href: "/projects", label: "Catálogo", icon: BookOpen },
   // { href: "/settings", label: "Configuración", icon: Settings },
 ];
 

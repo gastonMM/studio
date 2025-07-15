@@ -28,6 +28,7 @@ import { calculateProjectCost } from "@/lib/calculation";
 // Import server actions
 import { fetchMaterials } from "@/app/materials/actions";
 import { fetchAccessories } from "@/app/accessories/actions";
+import { saveProjectAction } from "../actions";
 
 const hhmmToHours = (hhmm: string): number => {
     if (!hhmm || !hhmm.includes(':')) return 0;
@@ -160,15 +161,14 @@ export default function CalculateProjectPage() {
     };
 
     try {
-      // const response = await saveProjectAction(projectToSave); // Server action
-      // if (response.success) {
-      //   toast({ title: "Proyecto Guardado", description: "El cálculo ha sido guardado correctamente." });
-      //   router.push("/projects");
-      // } else {
-      //   toast({ title: "Error al guardar", description: response.error, variant: "destructive" });
-      // }
-      toast({ title: "Simulación: Proyecto Guardado", description: `Proyecto ${values.nombreProyecto} sería guardado.` });
-      router.push("/projects");
+      const response = await saveProjectAction(projectToSave);
+      if (response.success) {
+        toast({ title: "Proyecto Guardado", description: "El cálculo ha sido guardado correctamente en tu catálogo." });
+        router.push("/projects");
+        router.refresh();
+      } else {
+        toast({ title: "Error al guardar", description: response.error, variant: "destructive" });
+      }
     } catch (error) {
       toast({ title: "Error", description: "Ocurrió un error inesperado.", variant: "destructive" });
     } finally {
@@ -395,7 +395,7 @@ export default function CalculateProjectPage() {
                   ) : (
                     <div className="text-center py-8">
                       <Image 
-                        src="https://picsum.photos/seed/calculator/300/200"
+                        src="https://placehold.co/300x200.png"
                         alt="Waiting for calculation" 
                         width={300}
                         height={200}

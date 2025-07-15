@@ -1,3 +1,4 @@
+
 # Documentación de la API - Calculadora Costos 3D Pro
 
 Esta API permite interactuar con los recursos de la aplicación de forma programática. Todas las respuestas son en formato JSON.
@@ -199,6 +200,51 @@ Retorna el objeto del accesorio completo y actualizado.
 ### `DELETE /api/accessories/{id}`
 
 Elimina un accesorio.
+
+**Respuesta Exitosa (204 No Content):**
+No devuelve contenido en el cuerpo de la respuesta.
+
+---
+
+## 4. Endpoints de Catálogo de Proyectos
+
+### `GET /api/projects`
+
+Obtiene una lista de todos los proyectos guardados en el catálogo.
+
+**Respuesta Exitosa (200 OK):**
+Retorna un array de objetos de proyecto.
+
+### `GET /api/projects/{id}`
+
+Obtiene un proyecto específico del catálogo por su ID.
+
+**Respuesta Exitosa (200 OK):**
+Retorna el objeto completo del proyecto.
+
+### `POST /api/projects`
+
+Crea un nuevo proyecto en el catálogo. Es similar a `/api/calculate` pero este endpoint guarda el resultado.
+
+**Body (raw JSON):**
+El cuerpo de la solicitud debe contener todos los datos necesarios para calcular y guardar el proyecto, excluyendo los campos que se generan automáticamente (`id`, fechas).
+
+**Respuesta Exitosa (201 Created):**
+Retorna el objeto del proyecto recién creado y guardado.
+
+### `PUT /api/projects/{id}`
+
+Actualiza un proyecto existente en el catálogo.
+
+**Body (raw JSON):**
+Proporciona los campos del proyecto a actualizar.
+
+**Respuesta Exitosa (200 OK):**
+Retorna el objeto del proyecto completo y actualizado.
+
+### `DELETE /api/projects/{id}`
+
+Elimina un proyecto del catálogo.
 
 **Respuesta Exitosa (204 No Content):**
 No devuelve contenido en el cuerpo de la respuesta.
