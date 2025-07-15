@@ -6,11 +6,17 @@ import { fetchMaterials } from '@/app/materials/actions';
 import { fetchAccessories } from '@/app/accessories/actions';
 import type { PrinterProfile } from '@/types';
 
+const hhmmToHours = (hhmm: string): number => {
+    if (!hhmm || !hhmm.includes(':')) return 0;
+    const [hours, minutes] = hhmm.split(':').map(Number);
+    return (hours || 0) + ((minutes || 0) / 60);
+};
+
 const webhookSchema = z.object({
   materialId: z.string(),
   printerProfileId: z.string(),
   weightGrams: z.coerce.number().positive(),
-  printTimeHours: z.coerce.number().positive(),
+  printTimeHours: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM."),
   postProcessingTimeHours: z.coerce.number().min(0).default(0),
   accessories: z.array(z.object({
     accessoryId: z.string(),
@@ -41,7 +47,7 @@ export async function POST(request: Request) {
       materialId,
       printerProfileId,
       weightGrams,
-      printTimeHours,
+      printTimeHours: printTimeHHMM,
       postProcessingTimeHours,
       accessories: inputAccessories,
     } = validation.data;
@@ -67,7 +73,7 @@ export async function POST(request: Request) {
       configuracionImpresoraIdUsada: printerProfileId,
       inputsOriginales: {
         pesoPiezaGramos: weightGrams,
-        tiempoImpresionHoras: printTimeHours,
+        tiempoImpresionHoras: hhmmToHours(printTimeHHMM),
         tiempoPostProcesadoHoras: postProcessingTimeHours,
         cantidadPiezasLote: 1, // Webhook calculates for a single piece
       },
@@ -90,3 +96,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'An internal server error occurred' }, { status: 500 });
   }
 }
+
+    

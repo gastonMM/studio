@@ -29,13 +29,19 @@ import { calculateProjectCost } from "@/lib/calculation";
 import { fetchMaterials } from "@/app/materials/actions";
 import { fetchAccessories } from "@/app/accessories/actions";
 
+const hhmmToHours = (hhmm: string): number => {
+    if (!hhmm || !hhmm.includes(':')) return 0;
+    const [hours, minutes] = hhmm.split(':').map(Number);
+    return (hours || 0) + ((minutes || 0) / 60);
+};
+
 export const projectSchema = z.object({
   nombreProyecto: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
   materialUsadoId: z.string().min(1, "Debe seleccionar un material."),
   configuracionImpresoraIdUsada: z.string().min(1, "Debe seleccionar un perfil de impresora."),
   inputsOriginales: z.object({
     pesoPiezaGramos: z.coerce.number().positive("El peso debe ser positivo."),
-    tiempoImpresionHoras: z.coerce.number().positive("El tiempo debe ser positivo."),
+    tiempoImpresionHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM."),
     tiempoPostProcesadoHoras: z.coerce.number().min(0, "El tiempo debe ser cero o positivo.").optional(),
     cantidadPiezasLote: z.coerce.number().int().positive("La cantidad debe ser al menos 1.").default(1),
     margenGananciaDeseadoPorcentaje: z.coerce.number().min(0, "El margen debe ser cero o positivo.").optional(),
@@ -87,7 +93,7 @@ export default function CalculateProjectPage() {
       configuracionImpresoraIdUsada: "",
       inputsOriginales: {
         pesoPiezaGramos: 0,
-        tiempoImpresionHoras: 0,
+        tiempoImpresionHoras: "00:00",
         tiempoPostProcesadoHoras: 0,
         cantidadPiezasLote: 1,
         margenGananciaDeseadoPorcentaje: 30,
@@ -101,8 +107,19 @@ export default function CalculateProjectPage() {
     name: "accesoriosUsadosEnProyecto",
   });
   
+  const processAndCalculate = (values: z.infer<typeof projectSchema>) => {
+    const processedValues = {
+        ...values,
+        inputsOriginales: {
+            ...values.inputsOriginales,
+            tiempoImpresionHoras: hhmmToHours(values.inputsOriginales.tiempoImpresionHoras),
+        }
+    };
+    return calculateProjectCost(processedValues, materials, printerProfiles, accessories);
+  };
+
   async function onCalculate(values: z.infer<typeof projectSchema>) {
-     const results = calculateProjectCost(values, materials, printerProfiles, accessories);
+     const results = processAndCalculate(values);
      if (results) {
         setCalculatedResults(results);
         toast({ title: "Cálculo realizado", description: "Los costos han sido estimados." });
@@ -113,7 +130,7 @@ export default function CalculateProjectPage() {
 
   async function onSave(values: z.infer<typeof projectSchema>) {
     setIsSubmitting(true);
-    const results = calculateProjectCost(values, materials, printerProfiles, accessories);
+    const results = processAndCalculate(values);
     if (!results) {
         toast({ title: "Error de datos", description: "No se puede guardar, verifique que los datos sean correctos (material, perfil, accesorios).", variant: "destructive" });
         setIsSubmitting(false);
@@ -122,6 +139,10 @@ export default function CalculateProjectPage() {
 
     const projectToSave: Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo'> & { id?: string } = {
       ...values,
+      inputsOriginales: {
+        ...values.inputsOriginales,
+        tiempoImpresionHoras: hhmmToHours(values.inputsOriginales.tiempoImpresionHoras),
+      },
       resultadosCalculados: results,
       accesoriosUsadosEnProyecto: values.accesoriosUsadosEnProyecto?.map(acc => {
         const accDetails = accessories.find(a => a.id === acc.accesorioId);
@@ -226,8 +247,8 @@ export default function CalculateProjectPage() {
                       name="inputsOriginales.tiempoImpresionHoras"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tiempo de Impresión (horas)</FormLabel>
-                          <FormControl><Input type="number" step="0.1" placeholder="Ej: 3.5" {...field} /></FormControl>
+                          <FormLabel>Tiempo de Impresión (HH:MM)</FormLabel>
+                          <FormControl><Input type="text" placeholder="Ej: 03:30" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -404,3 +425,5 @@ function ResultRow({ label, value, bold, primary, accent }: ResultRowProps) {
         </div>
     );
 }
+
+    
