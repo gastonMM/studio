@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ProjectFormData, Material, Accessory, PrinterProfile, AccessoryInProject, Project } from "@/types";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { PlusCircle, Trash2, Loader2, CalculatorIcon } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, CalculatorIcon, Upload } from "lucide-react";
 import Image from "next/image";
 import { calculateProjectCost } from "@/lib/calculation";
 
@@ -38,7 +38,7 @@ const hhmmToHours = (hhmm: string): number => {
 
 export const projectSchema = z.object({
   nombreProyecto: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
-  imageUrl: z.string().url("Debe ser una URL de imagen válida.").optional().or(z.literal('')),
+  imageUrl: z.string().optional().or(z.literal('')), // Now accepts data URLs
   materialUsadoId: z.string().min(1, "Debe seleccionar un material."),
   configuracionImpresoraIdUsada: z.string().min(1, "Debe seleccionar un perfil de impresora."),
   inputsOriginales: z.object({
@@ -66,13 +66,12 @@ export default function CalculateProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [calculatedResults, setCalculatedResults] = useState<Project["resultadosCalculados"] | null>(null);
   
-  // State for fetched data
   const [materials, setMaterials] = useState<Material[]>([]);
   const [accessories, setAccessories] = useState<Accessory[]>([]);
-  const [printerProfiles, setPrinterProfiles] = useState<PrinterProfile[]>(mockPrinterProfiles); // Still mocked for now
+  const [printerProfiles, setPrinterProfiles] = useState<PrinterProfile[]>(mockPrinterProfiles);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Fetch initial data for dropdowns
     async function loadData() {
       try {
         const [materialsData, accessoriesData] = await Promise.all([
@@ -94,7 +93,7 @@ export default function CalculateProjectPage() {
       nombreProyecto: "",
       imageUrl: "",
       materialUsadoId: "",
-      configuracionImpresoraIdUsada: "",
+      configuracionImpresoraIdUsada: "pp1", // Default to Ender 3
       inputsOriginales: {
         pesoPiezaGramos: 0,
         tiempoImpresionHoras: "00:00",
@@ -111,7 +110,24 @@ export default function CalculateProjectPage() {
     control: form.control,
     name: "accesoriosUsadosEnProyecto",
   });
+
+  const imageUrl = form.watch("imageUrl");
   
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({ title: "Error", description: "La imagen no puede pesar más de 2MB.", variant: "destructive" });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue("imageUrl", reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const processAndCalculate = (values: z.infer<typeof projectSchema>) => {
     const processedValues = {
         ...values,
@@ -203,18 +219,37 @@ export default function CalculateProjectPage() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="imageUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>URL de la Imagen (Opcional)</FormLabel>
-                        <FormControl><Input placeholder="https://ejemplo.com/imagen.jpg" {...field} /></FormControl>
-                        <FormDescription>Pega la URL de una imagen para mostrar en el catálogo.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <FormItem>
+                    <FormLabel>Imagen del Proyecto</FormLabel>
+                    <Card>
+                        <CardContent className="p-4 flex flex-col items-center gap-4">
+                            <div className="aspect-video relative w-full max-w-sm bg-muted rounded-md overflow-hidden flex items-center justify-center">
+                               {imageUrl ? (
+                                   <Image 
+                                       src={imageUrl} 
+                                       alt="Vista previa del proyecto" 
+                                       layout="fill"
+                                       objectFit="contain"
+                                   />
+                               ) : (
+                                   <div className="text-center text-muted-foreground p-4">
+                                       <Upload className="mx-auto h-10 w-10 mb-2"/>
+                                       <p>Sube una imagen</p>
+                                   </div>
+                               )}
+                           </div>
+                            <FormControl>
+                                <Input type="file" accept="image/png, image/jpeg, image/webp" className="hidden" ref={fileInputRef} onChange={handleImageUpload} />
+                            </FormControl>
+                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Seleccionar Imagen
+                            </Button>
+                            <FormDescription>La imagen se guardará como parte del proyecto en el catálogo.</FormDescription>
+                        </CardContent>
+                    </Card>
+                    <FormMessage />
+                  </FormItem>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
@@ -239,7 +274,7 @@ export default function CalculateProjectPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Perfil de Impresora</FormLabel>
-                          <Select onValuechange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar perfil" /></SelectTrigger></FormControl>
                             <SelectContent>
                               {printerProfiles.map(p => <SelectItem key={p.id} value={p.id}>{p.nombrePerfilImpresora}</SelectItem>)}
@@ -333,7 +368,7 @@ export default function CalculateProjectPage() {
                         render={({ field }) => (
                           <FormItem className="flex-1">
                             <FormLabel>Accesorio</FormLabel>
-                             <Select onValuechange={field.onChange} defaultValue={field.value}>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar accesorio" /></SelectTrigger></FormControl>
                                 <SelectContent>
                                 {accessories.map(a => <SelectItem key={a.id} value={a.id}>{a.nombreAccesorio}</SelectItem>)}
@@ -461,3 +496,5 @@ function ResultRow({ label, value, bold, primary, accent }: ResultRowProps) {
         </div>
     );
 }
+
+    
