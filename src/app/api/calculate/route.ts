@@ -2,8 +2,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { calculateProjectCost } from '@/lib/calculation';
-import { fetchMaterials } from '@/app/materials/actions';
-import { fetchAccessories } from '@/app/accessories/actions';
+import { getMaterials } from '@/services/material-service';
+import { getAccessories } from '@/services/accessory-service';
 import type { PrinterProfile } from '@/types';
 
 const hhmmToHours = (hhmm: string): number => {
@@ -55,8 +55,8 @@ export async function POST(request: Request) {
     } = validation.data;
 
     // Fetch master data
-    const allMaterials = await fetchMaterials();
-    const allAccessories = await fetchAccessories();
+    const allMaterials = await getMaterials();
+    const allAccessories = await getAccessories();
     const allPrinterProfiles = await fetchPrinterProfiles();
 
     const material = allMaterials.find(m => m.id === materialId);
@@ -99,4 +99,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'An internal server error occurred' }, { status: 500 });
   }
 }
-    
