@@ -17,6 +17,7 @@ const webhookSchema = z.object({
   printerProfileId: z.string(),
   weightGrams: z.coerce.number().positive(),
   printTimeHours: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM."),
+  laborTimeHours: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").optional().default("00:00"),
   postProcessingTimeHours: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").optional().default("00:00"),
   accessories: z.array(z.object({
     accessoryId: z.string(),
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
       printerProfileId,
       weightGrams,
       printTimeHours: printTimeHHMM,
+      laborTimeHours: laborTimeHHMM,
       postProcessingTimeHours: postProcessingTimeHHMM,
       accessories: inputAccessories,
     } = validation.data;
@@ -74,6 +76,7 @@ export async function POST(request: Request) {
       inputsOriginales: {
         pesoPiezaGramos: weightGrams,
         tiempoImpresionHoras: hhmmToHours(printTimeHHMM),
+        tiempoLaborOperativaHoras: hhmmToHours(laborTimeHHMM),
         tiempoPostProcesadoHoras: hhmmToHours(postProcessingTimeHHMM),
         cantidadPiezasLote: 1, // Webhook calculates for a single piece
       },

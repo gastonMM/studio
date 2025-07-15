@@ -42,6 +42,7 @@ export const projectSchema = z.object({
   inputsOriginales: z.object({
     pesoPiezaGramos: z.coerce.number().positive("El peso debe ser positivo."),
     tiempoImpresionHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").min(1, "El tiempo es obligatorio."),
+    tiempoLaborOperativaHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").optional(),
     tiempoPostProcesadoHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").optional(),
     cantidadPiezasLote: z.coerce.number().int().positive("La cantidad debe ser al menos 1.").default(1),
     margenGananciaDeseadoPorcentaje: z.coerce.number().min(0, "El margen debe ser cero o positivo."),
@@ -94,6 +95,7 @@ export default function CalculateProjectPage() {
       inputsOriginales: {
         pesoPiezaGramos: 0,
         tiempoImpresionHoras: "00:00",
+        tiempoLaborOperativaHoras: "00:00",
         tiempoPostProcesadoHoras: "00:00",
         cantidadPiezasLote: 1,
         margenGananciaDeseadoPorcentaje: 30,
@@ -113,6 +115,7 @@ export default function CalculateProjectPage() {
         inputsOriginales: {
             ...values.inputsOriginales,
             tiempoImpresionHoras: hhmmToHours(values.inputsOriginales.tiempoImpresionHoras),
+            tiempoLaborOperativaHoras: hhmmToHours(values.inputsOriginales.tiempoLaborOperativaHoras || "00:00"),
             tiempoPostProcesadoHoras: hhmmToHours(values.inputsOriginales.tiempoPostProcesadoHoras || "00:00"),
         }
     };
@@ -143,6 +146,7 @@ export default function CalculateProjectPage() {
       inputsOriginales: {
         ...values.inputsOriginales,
         tiempoImpresionHoras: hhmmToHours(values.inputsOriginales.tiempoImpresionHoras),
+        tiempoLaborOperativaHoras: hhmmToHours(values.inputsOriginales.tiempoLaborOperativaHoras || "00:00"),
         tiempoPostProcesadoHoras: hhmmToHours(values.inputsOriginales.tiempoPostProcesadoHoras || "00:00"),
       },
       resultadosCalculados: results,
@@ -259,16 +263,30 @@ export default function CalculateProjectPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
+                      name="inputsOriginales.tiempoLaborOperativaHoras"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tiempo Labor Operativa (HH:MM)</FormLabel>
+                          <FormControl><Input type="text" placeholder="Ej: 00:15" {...field} /></FormControl>
+                           <FormDescription>Supervisión, carga, etc. Opcional.</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
                       name="inputsOriginales.tiempoPostProcesadoHoras"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Tiempo Post-Procesado (HH:MM)</FormLabel>
                           <FormControl><Input type="text" placeholder="Ej: 00:30" {...field} /></FormControl>
-                          <FormDescription>Este campo es opcional.</FormDescription>
+                          <FormDescription>Limpieza, montaje. Opcional.</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="inputsOriginales.cantidadPiezasLote"

@@ -10,6 +10,7 @@ type CalculationInput = {
     inputsOriginales: {
         pesoPiezaGramos: number;
         tiempoImpresionHoras: number;
+        tiempoLaborOperativaHoras?: number;
         tiempoPostProcesadoHoras?: number;
         cantidadPiezasLote: number;
         margenGananciaDeseadoPorcentaje?: number;
@@ -37,6 +38,7 @@ export function calculateProjectCost(
     const { 
         pesoPiezaGramos, 
         tiempoImpresionHoras, 
+        tiempoLaborOperativaHoras = 0,
         tiempoPostProcesadoHoras = 0, 
         cantidadPiezasLote, 
         margenGananciaDeseadoPorcentaje = 0 
@@ -46,7 +48,7 @@ export function calculateProjectCost(
     const costoElectricidadPieza = ((profile.consumoEnergeticoImpresoraWatts || 0) / 1000) * tiempoImpresionHoras * (profile.costoKWhElectricidad || 0);
     const tasaAmortizacion = (profile.costoAdquisicionImpresora || 0) / (profile.vidaUtilEstimadaHorasImpresora || 1); // Avoid division by zero
     const costoAmortizacionPieza = tasaAmortizacion * tiempoImpresionHoras;
-    const costoLaborOperativaPieza = (profile.costoHoraLaborOperativa || 0) * tiempoImpresionHoras;
+    const costoLaborOperativaPieza = (profile.costoHoraLaborOperativa || 0) * tiempoLaborOperativaHoras;
     const costoLaborPostProcesadoPieza = (profile.costoHoraLaborPostProcesado || 0) * tiempoPostProcesadoHoras;
 
     let costoTotalAccesoriosPieza = 0;

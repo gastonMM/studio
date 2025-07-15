@@ -61,6 +61,7 @@ export interface Project {
   inputsOriginales: {
     pesoPiezaGramos: number;
     tiempoImpresionHoras: number;
+    tiempoLaborOperativaHoras?: number; // Opcional
     tiempoPostProcesadoHoras?: number; // Opcional
     cantidadPiezasLote: number; // Default: 1
     margenGananciaDeseadoPorcentaje?: number; // Ej: 30% (input as 30)
