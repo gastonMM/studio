@@ -1,20 +1,19 @@
-// This is a mock store. In a real application, you'd use Firestore.
+import pool, { toPlainObject } from '@/lib/db';
 import type { Accessory, AccessoryFormData } from "@/types";
+import type { RowDataPacket, OkPacket } from 'mysql2';
 
-let accessoriesDB: Accessory[] = [
-  { id: "acc1", nombreAccesorio: "Argolla Llavero", costoPorUnidad: 0.5, unidadesPorPaqueteEnLink: 100, precioPaqueteObtenido: 50, fechaUltimaActualizacionCosto: new Date() },
-  { id: "acc2", nombreAccesorio: "Iman Neodimio 6x2mm", costoPorUnidad: 20, unidadesPorPaqueteEnLink: 10, precioPaqueteObtenido: 200, fechaUltimaActualizacionCosto: new Date() },
-];
-let nextId = 3;
+type AccessoryRow = Accessory & RowDataPacket;
 
 // --- Service Functions ---
 
 export async function getAccessories(): Promise<Accessory[]> {
-  return JSON.parse(JSON.stringify(accessoriesDB));
+  const [rows] = await pool.query<AccessoryRow[]>("SELECT * FROM accessories ORDER BY nombreAccesorio ASC");
+  return toPlainObject(rows);
 }
 
 export async function getAccessoryById(id: string): Promise<Accessory | undefined> {
-  return JSON.parse(JSON.stringify(accessoriesDB.find(a => a.id === id)));
+  const [rows] = await pool.query<AccessoryRow[]>("SELECT * FROM accessories WHERE id = ?", [id]);
+  return toPlainObject(rows[0]);
 }
 
 export async function createAccessory(formData: AccessoryFormData): Promise<Accessory> {
@@ -23,44 +22,52 @@ export async function createAccessory(formData: AccessoryFormData): Promise<Acce
     }
 
     const costoPorUnidad = formData.precioPaqueteObtenido / formData.unidadesPorPaqueteEnLink;
-    const newAccessory: Accessory = {
-        id: `acc${nextId++}`,
+    
+    const newAccessoryData = {
         ...formData,
         costoPorUnidad,
         fechaUltimaActualizacionCosto: new Date(),
     };
-    accessoriesDB.push(newAccessory);
-    return JSON.parse(JSON.stringify(newAccessory));
+
+    const [result] = await pool.query<OkPacket>("INSERT INTO accessories SET ?", newAccessoryData);
+    
+    const newId = result.insertId;
+    
+    const newAccessory: Accessory = {
+        id: String(newId),
+        ...newAccessoryData
+    }
+    
+    return newAccessory;
 }
 
 export async function updateAccessory(id: string, formData: Partial<AccessoryFormData>): Promise<Accessory | null> {
-    const index = accessoriesDB.findIndex(a => a.id === id);
-    if (index === -1) {
+    const accessoryToUpdate = await getAccessoryById(id);
+    if (!accessoryToUpdate) {
         return null;
     }
     
-    const updatedAccessoryData = { ...accessoriesDB[index], ...formData };
+    const updatedFields = { ...accessoryToUpdate, ...formData };
 
     // Recalculate cost per unit if relevant fields are changed
-    const priceChanged = formData.precioPaqueteObtenido !== undefined;
-    const unitsChanged = formData.unidadesPorPaqueteEnLink !== undefined;
-    if (priceChanged || unitsChanged) {
-        updatedAccessoryData.costoPorUnidad = updatedAccessoryData.precioPaqueteObtenido / updatedAccessoryData.unidadesPorPaqueteEnLink;
+    if (formData.precioPaqueteObtenido !== undefined || formData.unidadesPorPaqueteEnLink !== undefined) {
+        updatedFields.costoPorUnidad = updatedFields.precioPaqueteObtenido / updatedFields.unidadesPorPaqueteEnLink;
     }
     
-    accessoriesDB[index] = {
-        ...updatedAccessoryData,
+    const finalData = {
+        ...updatedFields,
         fechaUltimaActualizacionCosto: new Date(),
     };
+
+    // Remove id from the object to be updated
+    const { id: accessoryId, ...dataToUpdate } = finalData;
+
+    await pool.query("UPDATE accessories SET ? WHERE id = ?", [dataToUpdate, id]);
     
-    return JSON.parse(JSON.stringify(accessoriesDB[index]));
+    return await getAccessoryById(id) ?? null;
 }
 
 export async function deleteAccessory(id: string): Promise<boolean> {
-    const index = accessoriesDB.findIndex(a => a.id === id);
-    if (index > -1) {
-        accessoriesDB.splice(index, 1);
-        return true;
-    }
-    return false;
+    const [result] = await pool.query<OkPacket>("DELETE FROM accessories WHERE id = ?", [id]);
+    return result.affectedRows > 0;
 }

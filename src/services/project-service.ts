@@ -1,15 +1,54 @@
-
+import pool, { toPlainObject } from '@/lib/db';
 import type { Project } from "@/types";
+import type { RowDataPacket, OkPacket } from 'mysql2';
 
-let projectsDB: Project[] = [];
-let nextId = 1;
+type ProjectRow = Omit<Project, 'imageUrls' | 'accesoriosUsadosEnProyecto' | 'inputsOriginales' | 'resultadosCalculados'> & {
+    imageUrls: string;
+    accesoriosUsadosEnProyecto: string;
+    inputsOriginales: string;
+    resultadosCalculados: string;
+} & RowDataPacket;
+
+function parseProject(row: ProjectRow): Project {
+    return {
+        ...row,
+        id: String(row.id),
+        fechaCreacion: new Date(row.fechaCreacion),
+        fechaUltimoCalculo: new Date(row.fechaUltimoCalculo),
+        imageUrls: row.imageUrls ? JSON.parse(row.imageUrls) : [],
+        accesoriosUsadosEnProyecto: row.accesoriosUsadosEnProyecto ? JSON.parse(row.accesoriosUsadosEnProyecto) : [],
+        inputsOriginales: row.inputsOriginales ? JSON.parse(row.inputsOriginales) : {},
+        resultadosCalculados: row.resultadosCalculados ? JSON.parse(row.resultadosCalculados) : {},
+    };
+}
+
+function prepareProjectForDb(projectData: Partial<Project>): any {
+    const dataForDb = { ...projectData };
+    if (dataForDb.imageUrls) {
+        dataForDb.imageUrls = JSON.stringify(dataForDb.imageUrls) as any;
+    }
+    if (dataForDb.accesoriosUsadosEnProyecto) {
+        dataForDb.accesoriosUsadosEnProyecto = JSON.stringify(dataForDb.accesoriosUsadosEnProyecto) as any;
+    }
+    if (dataForDb.inputsOriginales) {
+        dataForDb.inputsOriginales = JSON.stringify(dataForDb.inputsOriginales) as any;
+    }
+    if (dataForDb.resultadosCalculados) {
+        dataForDb.resultadosCalculados = JSON.stringify(dataForDb.resultadosCalculados) as any;
+    }
+    return dataForDb;
+}
+
 
 export async function getProjects(): Promise<Project[]> {
-  return JSON.parse(JSON.stringify(projectsDB));
+  const [rows] = await pool.query<ProjectRow[]>("SELECT * FROM projects ORDER BY fechaCreacion DESC");
+  return rows.map(parseProject);
 }
 
 export async function getProjectById(id: string): Promise<Project | undefined> {
-  return JSON.parse(JSON.stringify(projectsDB.find(p => p.id === id)));
+  const [rows] = await pool.query<ProjectRow[]>("SELECT * FROM projects WHERE id = ?", [id]);
+  if (rows.length === 0) return undefined;
+  return parseProject(rows[0]);
 }
 
 export async function createProject(
@@ -19,37 +58,40 @@ export async function createProject(
     throw new Error("El nombre del proyecto es obligatorio.");
   }
   const now = new Date();
-  const newProject: Project = {
+  
+  const dataToInsert = prepareProjectForDb({
     ...projectData,
-    id: `proj${nextId++}`,
     fechaCreacion: now,
     fechaUltimoCalculo: now,
-  };
-  projectsDB.push(newProject);
-  return JSON.parse(JSON.stringify(newProject));
+  });
+
+  const [result] = await pool.query<OkPacket>("INSERT INTO projects SET ?", dataToInsert);
+  
+  const newId = result.insertId;
+
+  return (await getProjectById(String(newId)))!;
 }
 
 export async function updateProject(id: string, projectData: Partial<Project>): Promise<Project | null> {
-  const index = projectsDB.findIndex(p => p.id === id);
-  if (index === -1) {
-    return null;
+  const projectToUpdate = await getProjectById(id);
+  if (!projectToUpdate) {
+      return null;
   }
   
-  projectsDB[index] = {
-    ...projectsDB[index],
+  const updatedData = {
     ...projectData,
-    id: projectsDB[index].id, // Ensure ID is not changed
     fechaUltimoCalculo: new Date(),
   };
+
+  const dataForDb = prepareProjectForDb(updatedData);
+  delete dataForDb.id; // Don't try to update the ID
+
+  await pool.query("UPDATE projects SET ? WHERE id = ?", [dataForDb, id]);
   
-  return JSON.parse(JSON.stringify(projectsDB[index]));
+  return await getProjectById(id) ?? null;
 }
 
 export async function deleteProject(id: string): Promise<boolean> {
-  const index = projectsDB.findIndex(p => p.id === id);
-  if (index > -1) {
-    projectsDB.splice(index, 1);
-    return true;
-  }
-  return false;
+  const [result] = await pool.query<OkPacket>("DELETE FROM projects WHERE id = ?", [id]);
+  return result.affectedRows > 0;
 }

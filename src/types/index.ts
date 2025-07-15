@@ -1,6 +1,6 @@
 
 export interface Material {
-  id: string; // Firestore document ID
+  id: string; // Corresponds to AUTO_INCREMENT PRIMARY KEY
   nombreMaterial: string;
   costoPorKg: number; // ARS
   pesoSpoolCompradoGramos: number; // Default: 1000g
@@ -13,7 +13,7 @@ export interface Material {
 }
 
 export interface Accessory {
-  id: string; // Firestore document ID
+  id: string; // Corresponds to AUTO_INCREMENT PRIMARY KEY
   nombreAccesorio: string;
   costoPorUnidad: number; // ARS (calculado)
   urlProducto?: string; // Link a la página donde se compra
@@ -25,7 +25,7 @@ export interface Accessory {
 }
 
 export interface PrinterProfile {
-  id: string; // Firestore document ID
+  id: string; // Corresponds to AUTO_INCREMENT PRIMARY KEY
   nombrePerfilImpresora: string;
   modeloImpresora?: string; // Ej: "Creality Ender 3 Pro"
   consumoEnergeticoImpresoraWatts?: number; // Ej: 200W
@@ -48,18 +48,18 @@ export interface AccessoryInProject {
 }
 
 export interface Project {
-  id: string; // Firestore document ID
+  id: string; // Corresponds to AUTO_INCREMENT PRIMARY KEY
   nombreProyecto: string;
-  imageUrls?: string[]; // URL de la imagen de la pieza
+  imageUrls: string[]; // Stored as JSON string in DB
   fechaCreacion: Date;
   fechaUltimoCalculo: Date;
   
   materialUsadoId: string;
   configuracionImpresoraIdUsada: string;
   
-  accesoriosUsadosEnProyecto: AccessoryInProject[];
+  accesoriosUsadosEnProyecto: AccessoryInProject[]; // Stored as JSON string
   
-  inputsOriginales: {
+  inputsOriginales: { // Stored as JSON string
     pesoPiezaGramos: number;
     tiempoImpresionHoras: number;
     tiempoLaborOperativaHoras?: number; // Opcional
@@ -68,7 +68,7 @@ export interface Project {
     margenGananciaDeseadoPorcentaje?: number; // Ej: 30% (input as 30)
   };
   
-  resultadosCalculados?: { // Snapshot of results
+  resultadosCalculados?: { // Stored as JSON string
     costoMaterialPieza: number;
     costoElectricidadPieza: number;
     costoAmortizacionPieza: number;
