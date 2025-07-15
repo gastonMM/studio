@@ -35,6 +35,24 @@ Calcula el costo y el precio de venta de un proyecto sin guardarlo.
 - `printTimeHours`, `laborTimeHours`, `postProcessingTimeHours` deben estar en formato `"HH:MM"`.
 - `laborTimeHours` y `postProcessingTimeHours` son opcionales.
 
+**Ejemplo con cURL:**
+```bash
+curl -X POST http://localhost:9002/api/calculate \
+-H "Content-Type: application/json" \
+-d '{
+  "materialId": "1",
+  "printerProfileId": "pp1",
+  "weightGrams": 25.5,
+  "printTimeHours": "03:30",
+  "laborTimeHours": "00:10",
+  "postProcessingTimeHours": "00:20",
+  "accessories": [
+    { "accessoryId": "acc1", "quantity": 1 },
+    { "accessoryId": "acc2", "quantity": 4 }
+  ]
+}'
+```
+
 **Respuesta Exitosa (200 OK):**
 
 ```json
@@ -62,6 +80,11 @@ Calcula el costo y el precio de venta de un proyecto sin guardarlo.
 
 Obtiene una lista de todos los materiales.
 
+**Ejemplo con cURL:**
+```bash
+curl http://localhost:9002/api/materials
+```
+
 **Respuesta Exitosa (200 OK):**
 
 ```json
@@ -74,6 +97,11 @@ Obtiene una lista de todos los materiales.
 ### `GET /api/materials/{id}`
 
 Obtiene un material específico por su ID.
+
+**Ejemplo con cURL:**
+```bash
+curl http://localhost:9002/api/materials/1
+```
 
 **Respuesta Exitosa (200 OK):**
 
@@ -106,6 +134,18 @@ Los campos `id` y `fechaUltimaActualizacionCosto` son ignorados, se generan auto
 }
 ```
 
+**Ejemplo con cURL:**
+```bash
+curl -X POST http://localhost:9002/api/materials \
+-H "Content-Type: application/json" \
+-d '{
+  "nombreMaterial": "ABS Naranja",
+  "costoPorKg": 18000,
+  "pesoSpoolCompradoGramos": 750,
+  "densidad": 1.04
+}'
+```
+
 **Respuesta Exitosa (201 Created):**
 Retorna el objeto del material recién creado, incluyendo su nuevo `id`.
 
@@ -123,12 +163,27 @@ Proporciona los campos a actualizar. Los campos no proporcionados no se modifica
 }
 ```
 
+**Ejemplo con cURL:**
+```bash
+curl -X PUT http://localhost:9002/api/materials/1 \
+-H "Content-Type: application/json" \
+-d '{
+  "costoPorKg": 18500,
+  "notasAdicionales": "Proveedor actualizado."
+}'
+```
+
 **Respuesta Exitosa (200 OK):**
 Retorna el objeto del material completo y actualizado.
 
 ### `DELETE /api/materials/{id}`
 
 Elimina un material.
+
+**Ejemplo con cURL:**
+```bash
+curl -X DELETE http://localhost:9002/api/materials/1
+```
 
 **Respuesta Exitosa (204 No Content):**
 No devuelve contenido en el cuerpo de la respuesta.
@@ -140,6 +195,11 @@ No devuelve contenido en el cuerpo de la respuesta.
 ### `GET /api/accessories`
 
 Obtiene una lista de todos los accesorios.
+
+**Ejemplo con cURL:**
+```bash
+curl http://localhost:9002/api/accessories
+```
 
 **Respuesta Exitosa (200 OK):**
 
@@ -153,6 +213,11 @@ Obtiene una lista de todos los accesorios.
 ### `GET /api/accessories/{id}`
 
 Obtiene un accesorio específico por su ID.
+
+**Ejemplo con cURL:**
+```bash
+curl http://localhost:9002/api/accessories/acc1
+```
 
 **Respuesta Exitosa (200 OK):**
 
@@ -179,6 +244,18 @@ Crea un nuevo accesorio. `costoPorUnidad` se calcula automáticamente.
 }
 ```
 
+**Ejemplo con cURL:**
+```bash
+curl -X POST http://localhost:9002/api/accessories \
+-H "Content-Type: application/json" \
+-d '{
+  "nombreAccesorio": "Tornillo M3x10",
+  "precioPaqueteObtenido": 1500,
+  "unidadesPorPaqueteEnLink": 100,
+  "urlProducto": "https://ejemplo.com/tornillos"
+}'
+```
+
 **Respuesta Exitosa (201 Created):**
 Retorna el objeto del accesorio recién creado, incluyendo su `id` y el `costoPorUnidad` calculado.
 
@@ -194,12 +271,26 @@ Actualiza un accesorio. Si `precioPaqueteObtenido` o `unidadesPorPaqueteEnLink` 
 }
 ```
 
+**Ejemplo con cURL:**
+```bash
+curl -X PUT http://localhost:9002/api/accessories/acc1 \
+-H "Content-Type: application/json" \
+-d '{
+  "precioPaqueteObtenido": 1650
+}'
+```
+
 **Respuesta Exitosa (200 OK):**
 Retorna el objeto del accesorio completo y actualizado.
 
 ### `DELETE /api/accessories/{id}`
 
 Elimina un accesorio.
+
+**Ejemplo con cURL:**
+```bash
+curl -X DELETE http://localhost:9002/api/accessories/acc1
+```
 
 **Respuesta Exitosa (204 No Content):**
 No devuelve contenido en el cuerpo de la respuesta.
@@ -212,6 +303,11 @@ No devuelve contenido en el cuerpo de la respuesta.
 
 Obtiene una lista de todos los proyectos guardados en el catálogo.
 
+**Ejemplo con cURL:**
+```bash
+curl http://localhost:9002/api/projects
+```
+
 **Respuesta Exitosa (200 OK):**
 Retorna un array de objetos de proyecto.
 
@@ -219,15 +315,53 @@ Retorna un array de objetos de proyecto.
 
 Obtiene un proyecto específico del catálogo por su ID.
 
+**Ejemplo con cURL:**
+```bash
+curl http://localhost:9002/api/projects/proj1
+```
+
 **Respuesta Exitosa (200 OK):**
 Retorna el objeto completo del proyecto.
 
 ### `POST /api/projects`
 
-Crea un nuevo proyecto en el catálogo. Es similar a `/api/calculate` pero este endpoint guarda el resultado.
+Crea un nuevo proyecto en el catálogo. Es similar a `/api/calculate` pero este endpoint guarda el resultado. El cuerpo de la solicitud es complejo ya que contiene el objeto completo del proyecto, incluyendo los resultados calculados.
 
 **Body (raw JSON):**
-El cuerpo de la solicitud debe contener todos los datos necesarios para calcular y guardar el proyecto, excluyendo los campos que se generan automáticamente (`id`, fechas).
+El cuerpo de la solicitud debe contener todos los datos necesarios para guardar el proyecto. El cálculo debe realizarse en el cliente (o con `/api/calculate`) y luego enviar el objeto completo a este endpoint.
+
+**Ejemplo con cURL:**
+```bash
+curl -X POST http://localhost:9002/api/projects \
+-H "Content-Type: application/json" \
+-d '{
+  "nombreProyecto": "Llavero de Prueba API",
+  "imageUrls": ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA..."],
+  "materialUsadoId": "1",
+  "configuracionImpresoraIdUsada": "pp1",
+  "accesoriosUsadosEnProyecto": [],
+  "inputsOriginales": {
+    "pesoPiezaGramos": 10,
+    "tiempoImpresionHoras": 1,
+    "cantidadPiezasLote": 1,
+    "margenGananciaDeseadoPorcentaje": 30
+  },
+  "resultadosCalculados": {
+    "costoMaterialPieza": 150,
+    "costoElectricidadPieza": 8,
+    "costoAmortizacionPieza": 300,
+    "costoLaborOperativaPieza": 0,
+    "costoLaborPostProcesadoPieza": 0,
+    "costoTotalAccesoriosPieza": 0,
+    "subTotalCostoDirectoPieza": 458,
+    "costoContingenciaFallasPieza": 22.9,
+    "costoTotalPieza": 480.9,
+    "costoTotalLote": 480.9,
+    "precioVentaSugeridoPieza": 625.17,
+    "precioVentaSugeridoLote": 625.17
+  }
+}'
+```
 
 **Respuesta Exitosa (201 Created):**
 Retorna el objeto del proyecto recién creado y guardado.
@@ -239,12 +373,26 @@ Actualiza un proyecto existente en el catálogo.
 **Body (raw JSON):**
 Proporciona los campos del proyecto a actualizar.
 
+**Ejemplo con cURL:**
+```bash
+curl -X PUT http://localhost:9002/api/projects/proj1 \
+-H "Content-Type: application/json" \
+-d '{
+  "nombreProyecto": "Nombre Actualizado del Llavero"
+}'
+```
+
 **Respuesta Exitosa (200 OK):**
 Retorna el objeto del proyecto completo y actualizado.
 
 ### `DELETE /api/projects/{id}`
 
 Elimina un proyecto del catálogo.
+
+**Ejemplo con cURL:**
+```bash
+curl -X DELETE http://localhost:9002/api/projects/proj1
+```
 
 **Respuesta Exitosa (204 No Content):**
 No devuelve contenido en el cuerpo de la respuesta.
