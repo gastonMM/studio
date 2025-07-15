@@ -50,6 +50,7 @@ export interface AccessoryInProject {
 export interface Project {
   id: string; // Firestore document ID
   nombreProyecto: string;
+  imageUrl?: string; // URL de la imagen de la pieza
   fechaCreacion: Date;
   fechaUltimoCalculo: Date;
   

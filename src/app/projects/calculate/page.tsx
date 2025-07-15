@@ -38,6 +38,7 @@ const hhmmToHours = (hhmm: string): number => {
 
 export const projectSchema = z.object({
   nombreProyecto: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
+  imageUrl: z.string().url("Debe ser una URL de imagen válida.").optional().or(z.literal('')),
   materialUsadoId: z.string().min(1, "Debe seleccionar un material."),
   configuracionImpresoraIdUsada: z.string().min(1, "Debe seleccionar un perfil de impresora."),
   inputsOriginales: z.object({
@@ -91,6 +92,7 @@ export default function CalculateProjectPage() {
     resolver: zodResolver(projectSchema),
     defaultValues: {
       nombreProyecto: "",
+      imageUrl: "",
       materialUsadoId: "",
       configuracionImpresoraIdUsada: "",
       inputsOriginales: {
@@ -201,6 +203,19 @@ export default function CalculateProjectPage() {
                     )}
                   />
 
+                  <FormField
+                    control={form.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL de la Imagen (Opcional)</FormLabel>
+                        <FormControl><Input placeholder="https://ejemplo.com/imagen.jpg" {...field} /></FormControl>
+                        <FormDescription>Pega la URL de una imagen para mostrar en el catálogo.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -224,7 +239,7 @@ export default function CalculateProjectPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Perfil de Impresora</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValuechange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar perfil" /></SelectTrigger></FormControl>
                             <SelectContent>
                               {printerProfiles.map(p => <SelectItem key={p.id} value={p.id}>{p.nombrePerfilImpresora}</SelectItem>)}
@@ -318,7 +333,7 @@ export default function CalculateProjectPage() {
                         render={({ field }) => (
                           <FormItem className="flex-1">
                             <FormLabel>Accesorio</FormLabel>
-                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                             <Select onValuechange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar accesorio" /></SelectTrigger></FormControl>
                                 <SelectContent>
                                 {accessories.map(a => <SelectItem key={a.id} value={a.id}>{a.nombreAccesorio}</SelectItem>)}
