@@ -17,7 +17,7 @@ const webhookSchema = z.object({
   printerProfileId: z.string(),
   weightGrams: z.coerce.number().positive(),
   printTimeHours: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM."),
-  postProcessingTimeHours: z.coerce.number().min(0).default(0),
+  postProcessingTimeHours: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").optional().default("00:00"),
   accessories: z.array(z.object({
     accessoryId: z.string(),
     quantity: z.coerce.number().int().positive(),
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       printerProfileId,
       weightGrams,
       printTimeHours: printTimeHHMM,
-      postProcessingTimeHours,
+      postProcessingTimeHours: postProcessingTimeHHMM,
       accessories: inputAccessories,
     } = validation.data;
 
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       inputsOriginales: {
         pesoPiezaGramos: weightGrams,
         tiempoImpresionHoras: hhmmToHours(printTimeHHMM),
-        tiempoPostProcesadoHoras: postProcessingTimeHours,
+        tiempoPostProcesadoHoras: hhmmToHours(postProcessingTimeHHMM),
         cantidadPiezasLote: 1, // Webhook calculates for a single piece
       },
       accesoriosUsadosEnProyecto: inputAccessories.map(acc => ({
@@ -96,5 +96,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'An internal server error occurred' }, { status: 500 });
   }
 }
-
     

@@ -42,7 +42,7 @@ export const projectSchema = z.object({
   inputsOriginales: z.object({
     pesoPiezaGramos: z.coerce.number().positive("El peso debe ser positivo."),
     tiempoImpresionHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM."),
-    tiempoPostProcesadoHoras: z.coerce.number().min(0, "El tiempo debe ser cero o positivo.").optional(),
+    tiempoPostProcesadoHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").optional(),
     cantidadPiezasLote: z.coerce.number().int().positive("La cantidad debe ser al menos 1.").default(1),
     margenGananciaDeseadoPorcentaje: z.coerce.number().min(0, "El margen debe ser cero o positivo.").optional(),
   }),
@@ -94,7 +94,7 @@ export default function CalculateProjectPage() {
       inputsOriginales: {
         pesoPiezaGramos: 0,
         tiempoImpresionHoras: "00:00",
-        tiempoPostProcesadoHoras: 0,
+        tiempoPostProcesadoHoras: "00:00",
         cantidadPiezasLote: 1,
         margenGananciaDeseadoPorcentaje: 30,
       },
@@ -113,6 +113,7 @@ export default function CalculateProjectPage() {
         inputsOriginales: {
             ...values.inputsOriginales,
             tiempoImpresionHoras: hhmmToHours(values.inputsOriginales.tiempoImpresionHoras),
+            tiempoPostProcesadoHoras: hhmmToHours(values.inputsOriginales.tiempoPostProcesadoHoras || "00:00"),
         }
     };
     return calculateProjectCost(processedValues, materials, printerProfiles, accessories);
@@ -142,6 +143,7 @@ export default function CalculateProjectPage() {
       inputsOriginales: {
         ...values.inputsOriginales,
         tiempoImpresionHoras: hhmmToHours(values.inputsOriginales.tiempoImpresionHoras),
+        tiempoPostProcesadoHoras: hhmmToHours(values.inputsOriginales.tiempoPostProcesadoHoras || "00:00"),
       },
       resultadosCalculados: results,
       accesoriosUsadosEnProyecto: values.accesoriosUsadosEnProyecto?.map(acc => {
@@ -260,8 +262,8 @@ export default function CalculateProjectPage() {
                       name="inputsOriginales.tiempoPostProcesadoHoras"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tiempo Post-Procesado (horas)</FormLabel>
-                          <FormControl><Input type="number" step="0.1" placeholder="Ej: 0.5" {...field} /></FormControl>
+                          <FormLabel>Tiempo Post-Procesado (HH:MM)</FormLabel>
+                          <FormControl><Input type="text" placeholder="Ej: 00:30" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
