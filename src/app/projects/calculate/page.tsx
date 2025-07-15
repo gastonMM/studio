@@ -41,10 +41,10 @@ export const projectSchema = z.object({
   configuracionImpresoraIdUsada: z.string().min(1, "Debe seleccionar un perfil de impresora."),
   inputsOriginales: z.object({
     pesoPiezaGramos: z.coerce.number().positive("El peso debe ser positivo."),
-    tiempoImpresionHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM."),
+    tiempoImpresionHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").min(1, "El tiempo es obligatorio."),
     tiempoPostProcesadoHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").optional(),
     cantidadPiezasLote: z.coerce.number().int().positive("La cantidad debe ser al menos 1.").default(1),
-    margenGananciaDeseadoPorcentaje: z.coerce.number().min(0, "El margen debe ser cero o positivo.").optional(),
+    margenGananciaDeseadoPorcentaje: z.coerce.number().min(0, "El margen debe ser cero o positivo."),
   }),
   accesoriosUsadosEnProyecto: z.array(z.object({
     accesorioId: z.string().min(1, "Debe seleccionar un accesorio."),
@@ -264,6 +264,7 @@ export default function CalculateProjectPage() {
                         <FormItem>
                           <FormLabel>Tiempo Post-Procesado (HH:MM)</FormLabel>
                           <FormControl><Input type="text" placeholder="Ej: 00:30" {...field} /></FormControl>
+                          <FormDescription>Este campo es opcional.</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -427,5 +428,3 @@ function ResultRow({ label, value, bold, primary, accent }: ResultRowProps) {
         </div>
     );
 }
-
-    
