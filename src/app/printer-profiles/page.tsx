@@ -47,7 +47,7 @@ export default function PrinterProfilesPage() {
                 width={600}
                 height={350}
                 data-ai-hint="3D printer diagram"
-                className="rounded-md mb-6 mx-auto"
+                className="rounded-md mb-6 mx-auto w-full h-auto"
             />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div><span className="font-semibold">Modelo:</span> {defaultProfile.modeloImpresora}</div>

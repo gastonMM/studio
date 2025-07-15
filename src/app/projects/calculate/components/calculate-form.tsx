@@ -111,7 +111,7 @@ export function CalculateProjectForm() {
     name: "accesoriosUsadosEnProyecto",
   });
   
-  const { fields: imageFields, append: appendImage, remove: removeImage } = useFieldArray({
+  const { remove: removeImage } = useFieldArray({
     control: form.control,
     name: "imageUrls"
   });
@@ -121,6 +121,7 @@ export function CalculateProjectForm() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
+      const currentImageUrls = form.getValues("imageUrls") || [];
       for (const file of Array.from(files)) {
         if (file.size > 2 * 1024 * 1024) { // 2MB limit
           toast({ title: "Error", description: `La imagen ${file.name} pesa más de 2MB.`, variant: "destructive" });
@@ -128,7 +129,7 @@ export function CalculateProjectForm() {
         }
         const reader = new FileReader();
         reader.onloadend = () => {
-          appendImage({ value: reader.result as string } as any); // react-hook-form uses objects
+          form.setValue("imageUrls", [...currentImageUrls, reader.result as string]);
         };
         reader.readAsDataURL(file);
       }
@@ -241,9 +242,8 @@ export function CalculateProjectForm() {
                                 <Image
                                   src={url}
                                   alt={`Vista previa del proyecto ${index + 1}`}
-                                  layout="fill"
-                                  objectFit="cover"
-                                  className="rounded-md"
+                                  fill
+                                  className="rounded-md object-cover"
                                 />
                                 <Button
                                   type="button"
@@ -529,4 +529,3 @@ function ResultRow({ label, value, bold, primary, accent }: ResultRowProps) {
         </div>
     );
 }
-

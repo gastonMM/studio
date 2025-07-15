@@ -82,8 +82,8 @@ export function ProjectList({ projects }: ProjectListProps) {
                         <Image
                           src={url}
                           alt={`${project.nombreProyecto} - Imagen ${index + 1}`}
-                          layout="fill"
-                          objectFit="cover"
+                          fill
+                          className="object-cover"
                           data-ai-hint="product 3d model"
                         />
                       </div>
@@ -95,8 +95,8 @@ export function ProjectList({ projects }: ProjectListProps) {
                       <Image
                         src="https://placehold.co/400x300.png"
                         alt={project.nombreProyecto}
-                        layout="fill"
-                        objectFit="cover"
+                        fill
+                        className="object-cover"
                         data-ai-hint="product 3d model"
                       />
                     </div>

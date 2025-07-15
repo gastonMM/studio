@@ -72,10 +72,9 @@ export default function DashboardPage() {
               <Image 
                 src="https://picsum.photos/seed/printer/800/450" 
                 alt="3D Printer in action" 
-                layout="fill"
-                objectFit="cover"
+                fill
                 data-ai-hint="3D printer workshop"
-                className="rounded-md"
+                className="rounded-md object-cover"
               />
             </div>
           </CardContent>
@@ -94,7 +93,7 @@ export default function DashboardPage() {
                 width={800}
                 height={400}
                 data-ai-hint="blueprint technology"
-                className="rounded-md mb-4"
+                className="rounded-md mb-4 w-full h-auto"
               />
             <ul className="list-disc list-inside space-y-2">
               <li>Integración con Slicers populares.</li>
