@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { calculateProjectCost } from '@/lib/calculation';
 import { getMaterials } from '@/services/material-service';
 import { getAccessories } from '@/services/accessory-service';
+import { getPrinterProfiles } from '@/services/printer-profile-service';
 import type { PrinterProfile } from '@/types';
 
 const hhmmToHours = (hhmm: string): number => {
@@ -24,16 +25,6 @@ const webhookSchema = z.object({
     quantity: z.coerce.number().int().positive(),
   })).optional().default([]),
 });
-
-// Mocked data as actions for these don't exist yet
-const mockPrinterProfiles: PrinterProfile[] = [
-  { id: "pp1", nombrePerfilImpresora: "Ender 3 Pro - Standard", consumoEnergeticoImpresoraWatts: 200, costoKWhElectricidad: 40, costoAdquisicionImpresora: 1200000, vidaUtilEstimadaHorasImpresora: 4000, porcentajeFallasEstimado: 5, costoHoraLaborOperativa: 2500, costoHoraLaborPostProcesado: 2000, fechaUltimaActualizacionConfig: new Date() },
-];
-
-async function fetchPrinterProfiles(): Promise<PrinterProfile[]> {
-    return mockPrinterProfiles;
-}
-
 
 export async function POST(request: Request) {
   try {
@@ -57,7 +48,7 @@ export async function POST(request: Request) {
     // Fetch master data
     const allMaterials = await getMaterials();
     const allAccessories = await getAccessories();
-    const allPrinterProfiles = await fetchPrinterProfiles();
+    const allPrinterProfiles = await getPrinterProfiles();
 
     const material = allMaterials.find(m => m.id === materialId);
     const printerProfile = allPrinterProfiles.find(p => p.id === printerProfileId);

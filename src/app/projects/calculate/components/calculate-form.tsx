@@ -28,6 +28,7 @@ import { calculateProjectCost } from "@/lib/calculation";
 // Import server actions
 import { fetchMaterials } from "@/app/materials/actions";
 import { fetchAccessories } from "@/app/accessories/actions";
+import { fetchPrinterProfiles } from "@/app/printer-profiles/actions";
 import { saveProjectAction } from "../../actions";
 
 const hhmmToHours = (hhmm: string): number => {
@@ -55,10 +56,6 @@ export const projectSchema = z.object({
   })).optional(),
 });
 
-// Mock data - replace with actual fetched data
-const mockPrinterProfiles: PrinterProfile[] = [
-  { id: "pp1", nombrePerfilImpresora: "Ender 3 Pro - Standard", consumoEnergeticoImpresoraWatts: 200, costoKWhElectricidad: 40, costoAdquisicionImpresora: 1200000, vidaUtilEstimadaHorasImpresora: 4000, porcentajeFallasEstimado: 5, costoHoraLaborOperativa: 2500, costoHoraLaborPostProcesado: 2000, fechaUltimaActualizacionConfig: new Date() },
-];
 
 export function CalculateProjectForm() {
   const { toast } = useToast();
@@ -68,18 +65,20 @@ export function CalculateProjectForm() {
   
   const [materials, setMaterials] = useState<Material[]>([]);
   const [accessories, setAccessories] = useState<Accessory[]>([]);
-  const [printerProfiles, setPrinterProfiles] = useState<PrinterProfile[]>(mockPrinterProfiles);
+  const [printerProfiles, setPrinterProfiles] = useState<PrinterProfile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [materialsData, accessoriesData] = await Promise.all([
+        const [materialsData, accessoriesData, profilesData] = await Promise.all([
           fetchMaterials(),
-          fetchAccessories()
+          fetchAccessories(),
+          fetchPrinterProfiles()
         ]);
         setMaterials(materialsData || []);
         setAccessories(accessoriesData || []);
+        setPrinterProfiles(profilesData || []);
       } catch (error) {
         toast({ title: "Error", description: "No se pudieron cargar los datos maestros.", variant: "destructive" });
       }
@@ -93,7 +92,7 @@ export function CalculateProjectForm() {
       nombreProyecto: "",
       imageUrls: [],
       materialUsadoId: "",
-      configuracionImpresoraIdUsada: "pp1", // Default to Ender 3
+      configuracionImpresoraIdUsada: "",
       inputsOriginales: {
         pesoPiezaGramos: 0,
         tiempoImpresionHoras: "00:00",
@@ -292,7 +291,7 @@ export function CalculateProjectForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Material Utilizado</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar material" /></SelectTrigger></FormControl>
                           <SelectContent>
                             {materials.map(m => <SelectItem key={m.id} value={m.id}>{m.nombreMaterial}</SelectItem>)}
@@ -308,7 +307,7 @@ export function CalculateProjectForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Perfil de Impresora</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar perfil" /></SelectTrigger></FormControl>
                           <SelectContent>
                             {printerProfiles.map(p => <SelectItem key={p.id} value={p.id}>{p.nombrePerfilImpresora}</SelectItem>)}
