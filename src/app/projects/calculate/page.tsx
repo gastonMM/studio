@@ -2,7 +2,7 @@
 "use client";
 
 import dynamic from 'next/dynamic'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const CalculateProjectForm = dynamic(() => import('./components/calculate-form').then(mod => mod.CalculateProjectForm), { 
