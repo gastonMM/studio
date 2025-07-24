@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-// import { deleteMaterialAction } from "../actions"; // Server action for deleting
+import { deleteMaterialAction } from "../actions";
 
 interface MaterialListProps {
   materials: Material[];
@@ -34,15 +34,12 @@ export function MaterialList({ materials }: MaterialListProps) {
   const { toast } = useToast();
 
   const handleDelete = async (id: string) => {
-    // Example of calling a server action
-    // const result = await deleteMaterialAction(id);
-    // if (result.success) {
-    //   toast({ title: "Material eliminado", description: "El material ha sido eliminado correctamente." });
-    //   // Optionally, refresh the list or optimistically update UI
-    // } else {
-    //   toast({ title: "Error", description: result.error, variant: "destructive" });
-    // }
-    toast({ title: "Simulación: Material eliminado", description: `Material con ID ${id} sería eliminado.` });
+    const result = await deleteMaterialAction(id);
+    if (result.success) {
+      toast({ title: "Material eliminado", description: "El material ha sido eliminado correctamente." });
+    } else {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    }
   };
 
   if (!materials || materials.length === 0) {
@@ -90,7 +87,7 @@ export function MaterialList({ materials }: MaterialListProps) {
                   '-'
                 )}
               </TableCell>
-              <TableCell>{new Date(material.fechaUltimaActualizacionCosto).toLocaleDateString()}</TableCell>
+              <TableCell>{new Date(material.fechaUltimaActualizacionCosto).toLocaleDateString('es-AR')}</TableCell>
               <TableCell className="text-right space-x-2">
                 <Button variant="outline" size="icon" asChild>
                   <Link href={`/materials/edit/${material.id}`}>

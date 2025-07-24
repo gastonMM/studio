@@ -113,7 +113,7 @@ export function ProjectList({ projects }: ProjectListProps) {
             <div className="p-6">
               <CardTitle>{project.nombreProyecto}</CardTitle>
               <CardDescription>
-                  Creado el {new Date(project.fechaCreacion).toLocaleDateString()}
+                  Creado el {new Date(project.fechaCreacion).toLocaleDateString('es-AR')}
               </CardDescription>
             </div>
           </CardHeader>
