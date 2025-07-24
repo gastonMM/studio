@@ -1,73 +1,62 @@
-import pool, { toPlainObject } from '@/lib/db';
+// This is a mock store. In a real application, you'd use a database like Firestore.
 import type { Accessory, AccessoryFormData } from "@/types";
-import type { RowDataPacket, OkPacket } from 'mysql2';
 
-type AccessoryRow = Accessory & RowDataPacket;
+let accessories: Accessory[] = [
+    { id: "acc1", nombreAccesorio: "Argolla Llavero", costoPorUnidad: 15.5, precioPaqueteObtenido: 1550, unidadesPorPaqueteEnLink: 100, fechaUltimaActualizacionCosto: new Date() },
+    { id: "acc2", nombreAccesorio: "Iman Neodimio 6x2mm", costoPorUnidad: 80.0, precioPaqueteObtenido: 8000, unidadesPorPaqueteEnLink: 100, fechaUltimaActualizacionCosto: new Date() },
+];
+
+let nextId = 3;
 
 // --- Service Functions ---
 
 export async function getAccessories(): Promise<Accessory[]> {
-  const [rows] = await pool.query<AccessoryRow[]>("SELECT * FROM accessories ORDER BY nombreAccesorio ASC");
-  return toPlainObject(rows);
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return accessories.sort((a, b) => a.nombreAccesorio.localeCompare(b.nombreAccesorio));
 }
 
 export async function getAccessoryById(id: string): Promise<Accessory | undefined> {
-  const [rows] = await pool.query<AccessoryRow[]>("SELECT * FROM accessories WHERE id = ?", [id]);
-  return toPlainObject(rows[0]);
+  await new Promise(resolve => setTimeout(resolve, 50));
+  return accessories.find(acc => acc.id === id);
 }
 
 export async function createAccessory(formData: AccessoryFormData): Promise<Accessory> {
     if (!formData.nombreAccesorio || formData.precioPaqueteObtenido <= 0 || formData.unidadesPorPaqueteEnLink <= 0) {
         throw new Error("Datos inválidos.");
     }
-
     const costoPorUnidad = formData.precioPaqueteObtenido / formData.unidadesPorPaqueteEnLink;
     
-    const newAccessoryData = {
+    const newAccessory: Accessory = {
+        id: `acc${nextId++}`,
         ...formData,
         costoPorUnidad,
         fechaUltimaActualizacionCosto: new Date(),
     };
-
-    const [result] = await pool.query<OkPacket>("INSERT INTO accessories SET ?", newAccessoryData);
     
-    const newId = result.insertId;
-    
-    const newAccessory: Accessory = {
-        id: String(newId),
-        ...newAccessoryData
-    }
-    
+    accessories.push(newAccessory);
     return newAccessory;
 }
 
 export async function updateAccessory(id: string, formData: Partial<AccessoryFormData>): Promise<Accessory | null> {
-    const accessoryToUpdate = await getAccessoryById(id);
-    if (!accessoryToUpdate) {
+    const index = accessories.findIndex(acc => acc.id === id);
+    if (index === -1) {
         return null;
     }
     
-    const updatedFields = { ...accessoryToUpdate, ...formData };
+    const updatedAccessory = { ...accessories[index], ...formData, fechaUltimaActualizacionCosto: new Date() };
 
     // Recalculate cost per unit if relevant fields are changed
     if (formData.precioPaqueteObtenido !== undefined || formData.unidadesPorPaqueteEnLink !== undefined) {
-        updatedFields.costoPorUnidad = updatedFields.precioPaqueteObtenido / updatedFields.unidadesPorPaqueteEnLink;
+        updatedAccessory.costoPorUnidad = updatedAccessory.precioPaqueteObtenido / updatedAccessory.unidadesPorPaqueteEnLink;
     }
     
-    const finalData = {
-        ...updatedFields,
-        fechaUltimaActualizacionCosto: new Date(),
-    };
-
-    // Remove id from the object to be updated
-    const { id: accessoryId, ...dataToUpdate } = finalData;
-
-    await pool.query("UPDATE accessories SET ? WHERE id = ?", [dataToUpdate, id]);
-    
-    return await getAccessoryById(id) ?? null;
+    accessories[index] = updatedAccessory;
+    return updatedAccessory;
 }
 
 export async function deleteAccessory(id: string): Promise<boolean> {
-    const [result] = await pool.query<OkPacket>("DELETE FROM accessories WHERE id = ?", [id]);
-    return result.affectedRows > 0;
+    const initialLength = accessories.length;
+    accessories = accessories.filter(acc => acc.id !== id);
+    return accessories.length < initialLength;
 }

@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-// import { saveMaterialAction } from "../actions"; // Server action
+import { saveMaterialAction } from "../actions";
 import { Loader2 } from "lucide-react";
 
 const materialSchema = z.object({
@@ -47,7 +47,6 @@ export function MaterialForm({ material }: MaterialFormProps) {
     resolver: zodResolver(materialSchema),
     defaultValues: material ? {
       ...material,
-      // Ensure Date types are not passed if not part of MaterialFormData
     } : {
       nombreMaterial: "",
       costoPorKg: 0,
@@ -63,16 +62,14 @@ export function MaterialForm({ material }: MaterialFormProps) {
   async function onSubmit(values: MaterialFormData) {
     setIsSubmitting(true);
     try {
-      // const result = await saveMaterialAction(values, material?.id);
-      // if (result.success) {
-      //   toast({ title: "Material guardado", description: "El material ha sido guardado correctamente." });
-      //   router.push("/materials");
-      //   router.refresh(); // Refresh server components
-      // } else {
-      //   toast({ title: "Error", description: result.error, variant: "destructive" });
-      // }
-      toast({ title: "Simulación: Material guardado", description: `Material ${values.nombreMaterial} sería guardado.` });
-      router.push("/materials");
+      const result = await saveMaterialAction(values, material?.id);
+      if (result.success) {
+        toast({ title: "Material guardado", description: "El material ha sido guardado correctamente." });
+        router.push("/materials");
+        router.refresh(); // Refresh server components
+      } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+      }
     } catch (error) {
       toast({ title: "Error", description: "Ocurrió un error inesperado.", variant: "destructive" });
     } finally {

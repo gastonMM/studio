@@ -1,57 +1,62 @@
-
-import pool, { toPlainObject } from '@/lib/db';
+// This is a mock store. In a real application, you'd use a database like Firestore.
 import type { PrinterProfile, PrinterProfileFormData } from "@/types";
-import type { RowDataPacket, OkPacket } from 'mysql2';
 
-type PrinterProfileRow = PrinterProfile & RowDataPacket;
+let profiles: PrinterProfile[] = [
+    { 
+        id: "pp1", 
+        nombrePerfilImpresora: "Perfil por Defecto", 
+        modeloImpresora: "Genérica",
+        consumoEnergeticoImpresoraWatts: 250,
+        costoKWhElectricidad: 45.5,
+        costoAdquisicionImpresora: 1200000,
+        vidaUtilEstimadaHorasImpresora: 4000,
+        porcentajeFallasEstimado: 5,
+        costoHoraLaborOperativa: 2500,
+        costoHoraLaborPostProcesado: 4000,
+        fechaUltimaActualizacionConfig: new Date()
+    }
+];
+
+let nextId = 2;
 
 export async function getPrinterProfiles(): Promise<PrinterProfile[]> {
-  const [rows] = await pool.query<PrinterProfileRow[]>("SELECT * FROM printer_profiles ORDER BY nombrePerfilImpresora ASC");
-  return toPlainObject(rows);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return profiles.sort((a, b) => a.nombrePerfilImpresora.localeCompare(b.nombrePerfilImpresora));
 }
 
 export async function getPrinterProfileById(id: string): Promise<PrinterProfile | undefined> {
-  const [rows] = await pool.query<PrinterProfileRow[]>("SELECT * FROM printer_profiles WHERE id = ?", [id]);
-  return toPlainObject(rows[0]);
+  await new Promise(resolve => setTimeout(resolve, 50));
+  return profiles.find(p => p.id === id);
 }
 
 export async function createPrinterProfile(formData: PrinterProfileFormData): Promise<PrinterProfile> {
     if (!formData.nombrePerfilImpresora) {
         throw new Error("El nombre del perfil es obligatorio.");
     }
-    
-    const newProfileData = {
+    const newProfile: PrinterProfile = {
+        id: `pp${nextId++}`,
         ...formData,
         fechaUltimaActualizacionConfig: new Date(),
     };
-
-    const [result] = await pool.query<OkPacket>("INSERT INTO printer_profiles SET ?", newProfileData);
-    
-    const newId = result.insertId;
-
-    return (await getPrinterProfileById(String(newId)))!;
+    profiles.push(newProfile);
+    return newProfile;
 }
 
 export async function updatePrinterProfile(id: string, formData: Partial<PrinterProfileFormData>): Promise<PrinterProfile | null> {
-    const profileToUpdate = await getPrinterProfileById(id);
-    if (!profileToUpdate) {
+    const index = profiles.findIndex(p => p.id === id);
+    if (index === -1) {
         return null;
     }
-    
-    const finalData = { 
-        ...profileToUpdate, 
-        ...formData,
-        fechaUltimaActualizacionConfig: new Date(),
-    };
-
-    const { id: profileId, ...dataToUpdate } = finalData;
-
-    await pool.query("UPDATE printer_profiles SET ? WHERE id = ?", [dataToUpdate, id]);
-
-    return await getPrinterProfileById(id) ?? null;
+    profiles[index] = { ...profiles[index], ...formData, fechaUltimaActualizacionConfig: new Date() };
+    return profiles[index];
 }
 
 export async function deletePrinterProfile(id: string): Promise<boolean> {
-  const [result] = await pool.query<OkPacket>("DELETE FROM printer_profiles WHERE id = ?", [id]);
-  return result.affectedRows > 0;
+    // Prevent deleting the last profile
+    if (profiles.length <= 1) {
+        throw new Error("No se puede eliminar el último perfil de impresora.");
+    }
+    const initialLength = profiles.length;
+    profiles = profiles.filter(p => p.id !== id);
+    return profiles.length < initialLength;
 }

@@ -3,24 +3,16 @@ import { MaterialList } from "./components/material-list";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusCircle } from "lucide-react";
-import { fetchMaterials } from "./actions"; // Assuming this action exists and fetches data
+import { fetchMaterials } from "./actions";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Gestión de Materiales - Calculadora Costos 3D Pro",
   description: "Administra tus filamentos y resinas para impresión 3D.",
 };
 
-// Mock data for now - replace with actual data fetching
-const sampleMaterials = [
-  { id: "1", nombreMaterial: "PLA Blanco Económico", costoPorKg: 15000, pesoSpoolCompradoGramos: 1000, densidad: 1.24, diametro: 1.75, fechaUltimaActualizacionCosto: new Date(), urlProducto: "https://www.mercadolibre.com.ar/pla-blanco" },
-  { id: "2", nombreMaterial: "PETG Negro Premium", costoPorKg: 22000, pesoSpoolCompradoGramos: 1000, densidad: 1.27, diametro: 1.75, fechaUltimaActualizacionCosto: new Date(), urlProducto: "https://www.mercadolibre.com.ar/petg-negro" },
-];
-
-
 export default async function MaterialsPage() {
-  // In a real app, you would fetch materials from Firestore here
-  // const materials = await fetchMaterials();
-  const materials = sampleMaterials; // Using mock data for now
+  const materials = await fetchMaterials();
 
   return (
     <div className="container mx-auto py-8">
@@ -32,7 +24,17 @@ export default async function MaterialsPage() {
           </Link>
         </Button>
       </div>
-      <MaterialList materials={materials} />
+      <Card>
+        <CardHeader>
+          <CardTitle>Listado de Materiales</CardTitle>
+          <CardDescription>
+            Estos son los materiales que tienes registrados. Serán usados en los cálculos de costos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MaterialList materials={materials} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
