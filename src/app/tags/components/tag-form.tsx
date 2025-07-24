@@ -31,10 +31,11 @@ import { Loader2 } from "lucide-react";
 
 const tagSchema = z.object({
   name: z.string().min(1, "El nombre no puede estar vacío."),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Debe ser un color hexadecimal válido (ej: #RRGGBB)."),
 });
 
 interface TagFormProps {
-  tag: Tag; // Editing is required, no creation form
+  tag?: Tag;
 }
 
 export function TagForm({ tag }: TagFormProps) {
@@ -44,19 +45,23 @@ export function TagForm({ tag }: TagFormProps) {
 
   const form = useForm<TagFormData>({
     resolver: zodResolver(tagSchema),
-    defaultValues: {
+    defaultValues: tag ? {
       name: tag.name,
+      color: tag.color,
+    } : {
+        name: "",
+        color: "#3498db"
     },
   });
 
   async function onSubmit(values: TagFormData) {
     setIsSubmitting(true);
     try {
-      const result = await saveTagAction(values, tag.id);
+      const result = await saveTagAction(values, tag?.id);
       if (result.success) {
         toast({
-          title: "Etiqueta actualizada",
-          description: "La etiqueta ha sido renombrada en todos los proyectos.",
+          title: tag ? "Etiqueta actualizada" : "Etiqueta creada",
+          description: `La etiqueta ha sido ${tag ? 'actualizada' : 'creada'} correctamente.`,
         });
         router.push("/tags");
         router.refresh();
@@ -81,10 +86,9 @@ export function TagForm({ tag }: TagFormProps) {
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Editar Etiqueta</CardTitle>
+        <CardTitle>{tag ? "Editar Etiqueta" : "Nueva Etiqueta"}</CardTitle>
         <CardDescription>
-          Este cambio se reflejará en todos los proyectos que usen esta
-          etiqueta.
+          {tag ? "Este cambio se reflejará en todos los proyectos que usen esta etiqueta." : "Crea una nueva etiqueta para organizar tus proyectos."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -103,6 +107,24 @@ export function TagForm({ tag }: TagFormProps) {
                 </FormItem>
               )}
             />
+             <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Color de la Etiqueta</FormLabel>
+                   <div className="flex items-center gap-2">
+                      <FormControl>
+                        <Input type="color" className="h-10 w-16 p-1" {...field} />
+                      </FormControl>
+                      <FormControl>
+                        <Input placeholder="#RRGGBB" {...field} />
+                       </FormControl>
+                   </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <CardFooter className="px-0 pt-6">
               <Button
                 type="submit"
@@ -112,7 +134,7 @@ export function TagForm({ tag }: TagFormProps) {
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Actualizar Etiqueta
+                {tag ? "Actualizar Etiqueta" : "Crear Etiqueta"}
               </Button>
               <Button
                 type="button"

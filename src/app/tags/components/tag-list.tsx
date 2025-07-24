@@ -56,9 +56,11 @@ export function TagList({ tags }: TagListProps) {
         <Tags className="mx-auto h-12 w-12 mb-4" />
         <h3 className="text-xl font-semibold">No hay etiquetas registradas</h3>
         <p className="mt-2">
-          Empieza agregando etiquetas a tus proyectos en la sección de "Nueva
-          Calculación".
+          Crea tu primera etiqueta para empezar a organizar tus proyectos.
         </p>
+         <Button asChild className="mt-4">
+          <Link href="/tags/new">Crear Etiqueta</Link>
+        </Button>
       </div>
     );
   }
@@ -75,7 +77,13 @@ export function TagList({ tags }: TagListProps) {
         <TableBody>
           {tags.map((tag) => (
             <TableRow key={tag.id}>
-              <TableCell className="font-medium">{tag.name}</TableCell>
+              <TableCell className="font-medium flex items-center gap-2">
+                <div
+                    className="h-4 w-4 rounded-full"
+                    style={{ backgroundColor: tag.color }}
+                />
+                {tag.name}
+              </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button variant="outline" size="icon" asChild>
                   <Link href={`/tags/edit/${tag.id}`}>
@@ -96,13 +104,13 @@ export function TagList({ tags }: TagListProps) {
                       <AlertDialogDescription>
                         Esta acción no se puede deshacer. Esto eliminará la
                         etiqueta de <strong>todos los proyectos</strong> que la
-                        estén utilizando.
+                        estén utilizando y la eliminará permanentemente.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction onClick={() => handleDelete(tag.id)}>
-                        Eliminar de Todos
+                        Eliminar
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

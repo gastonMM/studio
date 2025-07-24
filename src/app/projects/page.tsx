@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Filter, X } from "lucide-react";
 import Link from "next/link";
 import { fetchProjects } from "./actions";
+import { fetchTags } from '../tags/actions';
 import { ProjectList } from "./components/project-list";
-import { Project } from '@/types';
+import { Project, Tag } from '@/types';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -21,21 +22,25 @@ import { Badge } from "@/components/ui/badge";
 
 export default function SavedProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
-
+  
   useEffect(() => {
-    async function loadProjects() {
-      const fetchedProjects = await fetchProjects();
-      setProjects(fetchedProjects);
+    async function loadData() {
+        const [projectsData, tagsData] = await Promise.all([
+            fetchProjects(),
+            fetchTags()
+        ]);
+        setProjects(projectsData);
+        setAllTags(tagsData);
     }
-    loadProjects();
+    loadData();
   }, []);
 
-  const allTags = useMemo(() => {
-    const tags = new Set<string>();
-    projects.forEach(p => p.tags?.forEach(t => tags.add(t)));
-    return Array.from(tags).sort();
-  }, [projects]);
+  const availableTags = useMemo(() => {
+    return allTags.sort((a,b) => a.name.localeCompare(b.name));
+  }, [allTags]);
+
 
   const filteredProjects = useMemo(() => {
     if (selectedTags.size === 0) {
@@ -46,13 +51,13 @@ export default function SavedProjectsPage() {
     );
   }, [projects, selectedTags]);
 
-  const handleTagToggle = (tag: string) => {
+  const handleTagToggle = (tagName: string) => {
     setSelectedTags(prev => {
       const newTags = new Set(prev);
-      if (newTags.has(tag)) {
-        newTags.delete(tag);
+      if (newTags.has(tagName)) {
+        newTags.delete(tagName);
       } else {
-        newTags.add(tag);
+        newTags.add(tagName);
       }
       return newTags;
     });
@@ -77,13 +82,13 @@ export default function SavedProjectsPage() {
             <DropdownMenuContent className="w-56">
               <DropdownMenuLabel>Etiquetas Disponibles</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {allTags.length > 0 ? allTags.map(tag => (
+              {availableTags.length > 0 ? availableTags.map(tag => (
                 <DropdownMenuCheckboxItem
-                  key={tag}
-                  checked={selectedTags.has(tag)}
-                  onCheckedChange={() => handleTagToggle(tag)}
+                  key={tag.id}
+                  checked={selectedTags.has(tag.name)}
+                  onCheckedChange={() => handleTagToggle(tag.name)}
                 >
-                  {tag}
+                  {tag.name}
                 </DropdownMenuCheckboxItem>
               )) : (
                 <div className="px-2 py-1.5 text-sm text-muted-foreground">No hay etiquetas.</div>
@@ -103,7 +108,14 @@ export default function SavedProjectsPage() {
             <h3 className="text-sm font-medium">Filtros activos:</h3>
             <div className="flex flex-wrap gap-2">
             {Array.from(selectedTags).map(tag => (
-                <Badge key={tag} variant="secondary">
+                <Badge 
+                    key={tag} 
+                    className="border-transparent"
+                    style={{ 
+                        backgroundColor: availableTags.find(t => t.name === tag)?.color, 
+                        color: "hsl(var(--primary-foreground))"
+                    }}
+                >
                 {tag}
                 <button onClick={() => handleTagToggle(tag)} className="ml-1 rounded-full p-0.5 hover:bg-destructive/20">
                     <X className="h-3 w-3" />
@@ -116,7 +128,7 @@ export default function SavedProjectsPage() {
             </Button>
         </div>
       )}
-      <ProjectList projects={filteredProjects} />
+      <ProjectList projects={filteredProjects} allTags={allTags} />
     </div>
   );
 }

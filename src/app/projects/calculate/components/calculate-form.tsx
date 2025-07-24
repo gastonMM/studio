@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { ProjectFormData, Material, Accessory, PrinterProfile, AccessoryInProject, Project } from "@/types";
+import type { ProjectFormData, Material, Accessory, PrinterProfile, AccessoryInProject, Project, Tag } from "@/types";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -22,7 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { PlusCircle, Trash2, Loader2, CalculatorIcon, Upload, X, Tags } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, CalculatorIcon, Upload, X, Tags as TagsIcon } from "lucide-react";
 import Image from "next/image";
 import { calculateProjectCost } from "@/lib/calculation";
 
@@ -30,6 +31,7 @@ import { calculateProjectCost } from "@/lib/calculation";
 import { fetchMaterials } from "@/app/materials/actions";
 import { fetchAccessories } from "@/app/accessories/actions";
 import { fetchPrinterProfiles } from "@/app/printer-profiles/actions";
+import { fetchTags } from "@/app/tags/actions";
 import { saveProjectAction } from "../../actions";
 
 const hhmmToHours = (hhmm: string): number => {
@@ -69,19 +71,22 @@ export function CalculateProjectForm() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [accessories, setAccessories] = useState<Accessory[]>([]);
   const [printerProfiles, setPrinterProfiles] = useState<PrinterProfile[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [materialsData, accessoriesData, profilesData] = await Promise.all([
+        const [materialsData, accessoriesData, profilesData, tagsData] = await Promise.all([
           fetchMaterials(),
           fetchAccessories(),
-          fetchPrinterProfiles()
+          fetchPrinterProfiles(),
+          fetchTags(),
         ]);
         setMaterials(materialsData || []);
         setAccessories(accessoriesData || []);
         setPrinterProfiles(profilesData || []);
+        setAllTags(tagsData || []);
       } catch (error) {
         toast({ title: "Error", description: "No se pudieron cargar los datos maestros.", variant: "destructive" });
       }
@@ -152,12 +157,17 @@ export function CalculateProjectForm() {
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim() !== '') {
       e.preventDefault();
-      const newTag = tagInput.trim().toLowerCase();
-      if (!tags.includes(newTag)) {
-        appendTag(newTag);
+      const newTagName = tagInput.trim();
+      if (!tags.includes(newTagName)) {
+        appendTag(newTagName);
       }
       setTagInput('');
     }
+  };
+
+  const getTagColor = (tagName: string) => {
+    const tag = allTags.find(t => t.name === tagName);
+    return tag?.color;
   };
 
   const processAndCalculate = (values: z.infer<typeof projectSchema>) => {
@@ -310,9 +320,9 @@ export function CalculateProjectForm() {
                   <FormLabel>Etiquetas</FormLabel>
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
-                        <Tags className="h-5 w-5 text-muted-foreground" />
+                        <TagsIcon className="h-5 w-5 text-muted-foreground" />
                         <Input 
-                            placeholder="Escribe una etiqueta y presiona Enter" 
+                            placeholder="Escribe el nombre de una etiqueta y presiona Enter" 
                             value={tagInput}
                             onChange={(e) => setTagInput(e.target.value)}
                             onKeyDown={handleTagKeyDown}
@@ -320,7 +330,14 @@ export function CalculateProjectForm() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {tags.map((tag, index) => (
-                            <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                            <Badge 
+                                key={index} 
+                                className="flex items-center gap-1 border-transparent"
+                                style={{ 
+                                  backgroundColor: getTagColor(tag), 
+                                  color: "hsl(var(--primary-foreground))"
+                                }}
+                            >
                                 {tag}
                                 <button type="button" onClick={() => removeTag(index)} className="rounded-full hover:bg-destructive/20 p-0.5">
                                     <X className="h-3 w-3" />
@@ -329,7 +346,7 @@ export function CalculateProjectForm() {
                         ))}
                     </div>
                   </div>
-                  <FormDescription>Ayuda a categorizar y encontrar proyectos más tarde.</FormDescription>
+                  <FormDescription>Si la etiqueta no existe, se creará con un color aleatorio. Puedes cambiarlo luego en la sección de configuración.</FormDescription>
                   <FormMessage />
                 </FormItem>
 

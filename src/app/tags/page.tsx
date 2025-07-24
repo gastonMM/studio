@@ -7,6 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+import Link from "next/link";
 import { fetchTags } from "./actions";
 import { TagList } from "./components/tag-list";
 
@@ -22,6 +25,11 @@ export default async function TagsPage() {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Gestión de Etiquetas</h1>
+        <Button asChild>
+          <Link href="/tags/new">
+            <PlusCircle className="mr-2 h-4 w-4" /> Nueva Etiqueta
+          </Link>
+        </Button>
       </div>
       <Card>
         <CardHeader>

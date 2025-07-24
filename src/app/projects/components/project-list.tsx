@@ -2,10 +2,10 @@
 
 "use client";
 
-import type { Project } from "@/types";
+import type { Project, Tag } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, BookOpen, Tag } from "lucide-react";
+import { Edit, Trash2, BookOpen, Tag as TagIcon } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -37,14 +37,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
 
 interface ProjectListProps {
   projects: Project[];
+  allTags: Tag[];
 }
 
-export function ProjectList({ projects }: ProjectListProps) {
+export function ProjectList({ projects, allTags }: ProjectListProps) {
   const { toast } = useToast();
   const router = useRouter();
+
+  const getTagColor = (tagName: string) => {
+    const tag = allTags.find(t => t.name === tagName);
+    return tag?.color;
+  };
 
   const handleDelete = async (id: string) => {
     const result = await deleteProjectAction(id);
@@ -135,10 +143,19 @@ export function ProjectList({ projects }: ProjectListProps) {
             </div>
             {project.tags && project.tags.length > 0 && (
                 <div className="border-t pt-4">
-                    <h4 className="text-sm font-medium mb-2 flex items-center"><Tag className="w-4 h-4 mr-2 text-muted-foreground"/>Etiquetas</h4>
+                    <h4 className="text-sm font-medium mb-2 flex items-center"><TagIcon className="w-4 h-4 mr-2 text-muted-foreground"/>Etiquetas</h4>
                     <div className="flex flex-wrap gap-2">
                         {project.tags.map(tag => (
-                            <Badge key={tag} variant="outline">{tag}</Badge>
+                            <Badge 
+                                key={tag} 
+                                className="border-transparent"
+                                style={{ 
+                                    backgroundColor: getTagColor(tag), 
+                                    color: "hsl(var(--primary-foreground))"
+                                }}
+                            >
+                                {tag}
+                            </Badge>
                         ))}
                     </div>
                 </div>

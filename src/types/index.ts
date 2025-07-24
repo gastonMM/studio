@@ -51,6 +51,7 @@ export interface AccessoryInProject {
 export interface Tag {
   id: string;
   name: string;
+  color: string; // e.g., "#FF5733"
 }
 
 export interface Project {
