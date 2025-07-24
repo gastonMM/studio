@@ -27,8 +27,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { saveTagAction } from "../actions";
-import { Loader2 } from "lucide-react";
+import { Loader2, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const tagSchema = z.object({
   name: z.string().min(1, "El nombre no puede estar vacío."),
@@ -40,8 +41,9 @@ const colorPalette = [
   "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
   "#008080", "#e6beff", "#9A6324", "#fffac8", "#800000",
   "#aaffc3", "#808000", "#ffd8b1", "#000075", "#a9a9a9",
-  "#ffffff", "#000000", "#d32f2f", "#1976d2", "#388e3c"
+  "#d32f2f", "#1976d2", "#388e3c", "#fbc02d", "#8e24aa"
 ];
+
 
 interface TagFormProps {
   tag?: Tag;
@@ -122,29 +124,54 @@ export function TagForm({ tag }: TagFormProps) {
               control={form.control}
               name="color"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color de la Etiqueta</FormLabel>
-                   <FormControl>
-                      <div className="grid grid-cols-5 gap-2 p-3 border rounded-md">
-                        {colorPalette.map(color => (
-                          <button
-                            type="button"
-                            key={color}
-                            className={cn(
-                              "h-10 w-full rounded-md border-2 transition-all",
-                              selectedColor.toLowerCase() === color.toLowerCase()
-                                ? "ring-2 ring-offset-2 ring-ring"
-                                : "border-transparent",
-                              color === "#ffffff" && "border-input" // Add border for white swatch for visibility
-                            )}
-                            style={{ backgroundColor: color }}
-                            onClick={() => form.setValue("color", color, { shouldValidate: true })}
-                            aria-label={`Select color ${color}`}
-                          />
-                        ))}
-                      </div>
-                   </FormControl>
-                  <FormMessage />
+                <FormItem className="flex flex-col">
+                    <FormLabel>Color de la Etiqueta</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                    "w-[280px] justify-between",
+                                    !field.value && "text-muted-foreground"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div 
+                                            className="w-4 h-4 rounded-full border" 
+                                            style={{ backgroundColor: field.value }}
+                                        />
+                                        {field.value}
+                                    </div>
+                                    <Palette className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                             <div className="grid grid-cols-5 gap-2 p-3">
+                                {colorPalette.map(color => (
+                                <button
+                                    type="button"
+                                    key={color}
+                                    className={cn(
+                                    "h-10 w-10 rounded-md border-2 transition-all",
+                                    selectedColor.toLowerCase() === color.toLowerCase()
+                                        ? "ring-2 ring-offset-2 ring-ring"
+                                        : "border-transparent",
+                                    color === "#ffffff" && "border-input"
+                                    )}
+                                    style={{ backgroundColor: color }}
+                                    onClick={() => {
+                                        form.setValue("color", color, { shouldValidate: true });
+                                    }}
+                                    aria-label={`Select color ${color}`}
+                                />
+                                ))}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
                 </FormItem>
               )}
             />
@@ -174,3 +201,5 @@ export function TagForm({ tag }: TagFormProps) {
     </Card>
   );
 }
+
+    
