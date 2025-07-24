@@ -101,7 +101,7 @@ export function PrinterProfileList({ profiles }: PrinterProfileListProps) {
             <CardContent>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <div><span className="font-semibold">Consumo:</span> {profile.consumoEnergeticoImpresoraWatts}W</div>
-                    <div><span className="font-semibold">Costo KWh:</span> ${profile.costoKWhElectricidad}/kWh</div>
+                    <div><span className="font-semibold">Perfil Eléctrico:</span> {profile.electricityProfileId}</div>
                     <div><span className="font-semibold">Costo Adquisición:</span> ${profile.costoAdquisicionImpresora?.toLocaleString('es-AR')}</div>
                     <div><span className="font-semibold">Vida Útil:</span> {profile.vidaUtilEstimadaHorasImpresora}h</div>
                     <div><span className="font-semibold">Tasa Fallas:</span> {profile.porcentajeFallasEstimado}%</div>

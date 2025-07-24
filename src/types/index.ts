@@ -25,12 +25,20 @@ export interface Accessory {
   notasAdicionales?: string;
 }
 
+export interface ElectricityProfile {
+  id: string;
+  nombrePerfil: string;
+  consumoMensualKWh: number;
+  costoTotalFactura: number;
+  costoPorKWh: number; // Calculated
+}
+
 export interface PrinterProfile {
   id: string; // Corresponds to AUTO_INCREMENT PRIMARY KEY
   nombrePerfilImpresora: string;
   modeloImpresora?: string; // Ej: "Creality Ender 3 Pro"
   consumoEnergeticoImpresoraWatts?: number; // Ej: 200W
-  costoKWhElectricidad?: number; // Ej: 40 ARS/kWh
+  electricityProfileId?: string; // FK to ElectricityProfile
   costoAdquisicionImpresora?: number; // Ej: 1,200,000 ARS
   vidaUtilEstimadaHorasImpresora?: number; // Ej: 4000h
   tasaAmortizacionImpresoraPorHoraUso?: number; // calculado
@@ -96,6 +104,7 @@ export interface Project {
 // For react-hook-form, partial types are often useful
 export type MaterialFormData = Omit<Material, 'id' | 'fechaUltimaActualizacionCosto'> & { id?: string };
 export type AccessoryFormData = Omit<Accessory, 'id' | 'fechaUltimaActualizacionCosto' | 'costoPorUnidad'> & { id?: string };
+export type ElectricityProfileFormData = Omit<ElectricityProfile, 'id' | 'costoPorKWh'> & { id?: string };
 export type PrinterProfileFormData = Omit<PrinterProfile, 'id' | 'fechaUltimaActualizacionConfig' | 'tasaAmortizacionImpresoraPorHoraUso'> & { id?: string };
 export type ProjectFormData = Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo' | 'resultadosCalculados'> & { id?: string };
 export type TagFormData = Omit<Tag, 'id'>;

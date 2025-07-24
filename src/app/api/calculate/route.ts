@@ -5,7 +5,7 @@ import { calculateProjectCost } from '@/lib/calculation';
 import { getMaterials } from '@/services/material-service';
 import { getAccessories } from '@/services/accessory-service';
 import { getPrinterProfiles } from '@/services/printer-profile-service';
-import type { PrinterProfile } from '@/types';
+import { getElectricityProfiles } from '@/services/electricity-profile-service';
 
 const hhmmToHours = (hhmm: string): number => {
     if (!hhmm || !hhmm.includes(':')) return 0;
@@ -49,6 +49,7 @@ export async function POST(request: Request) {
     const allMaterials = await getMaterials();
     const allAccessories = await getAccessories();
     const allPrinterProfiles = await getPrinterProfiles();
+    const allElectricityProfiles = await getElectricityProfiles();
 
     const material = allMaterials.find(m => m.id === materialId);
     const printerProfile = allPrinterProfiles.find(p => p.id === printerProfileId);
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
       }))
     };
     
-    const results = calculateProjectCost(calculationInput, allMaterials, allPrinterProfiles, allAccessories);
+    const results = calculateProjectCost(calculationInput, allMaterials, allPrinterProfiles, allAccessories, allElectricityProfiles);
 
     if (!results) {
        return NextResponse.json({ error: 'Could not calculate cost. Check accessory IDs.' }, { status: 400 });

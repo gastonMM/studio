@@ -1,3 +1,4 @@
+
 // This is a mock store. In a real application, you'd use a database like Firestore.
 import type { PrinterProfile, PrinterProfileFormData } from "@/types";
 
@@ -7,7 +8,7 @@ let profiles: PrinterProfile[] = [
         nombrePerfilImpresora: "Perfil por Defecto", 
         modeloImpresora: "Genérica",
         consumoEnergeticoImpresoraWatts: 250,
-        costoKWhElectricidad: 45.5,
+        electricityProfileId: "ep1",
         costoAdquisicionImpresora: 1200000,
         vidaUtilEstimadaHorasImpresora: 4000,
         porcentajeFallasEstimado: 5,

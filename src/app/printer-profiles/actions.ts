@@ -4,9 +4,16 @@
 import type { PrinterProfileFormData, PrinterProfile } from "@/types";
 import { revalidatePath } from "next/cache";
 import { getPrinterProfiles, getPrinterProfileById, createPrinterProfile, updatePrinterProfile, deletePrinterProfile } from "@/services/printer-profile-service";
+import { getElectricityProfiles } from "@/services/electricity-profile-service";
+import type { ElectricityProfile } from "@/types";
+
 
 export async function fetchPrinterProfiles(): Promise<PrinterProfile[]> {
   return getPrinterProfiles();
+}
+
+export async function fetchElectricityProfiles(): Promise<ElectricityProfile[]> {
+  return getElectricityProfiles();
 }
 
 export async function fetchPrinterProfileById(id: string): Promise<PrinterProfile | undefined> {

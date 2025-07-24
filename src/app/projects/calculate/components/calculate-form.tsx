@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { ProjectFormData, Material, Accessory, PrinterProfile, Project, Tag } from "@/types";
+import type { ProjectFormData, Material, Accessory, PrinterProfile, Project, Tag, ElectricityProfile } from "@/types";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -30,6 +30,7 @@ import { calculateProjectCost } from "@/lib/calculation";
 import { fetchMaterials } from "@/app/materials/actions";
 import { fetchAccessories } from "@/app/accessories/actions";
 import { fetchPrinterProfiles } from "@/app/printer-profiles/actions";
+import { fetchElectricityProfiles } from "@/app/electricity-profiles/actions";
 import { fetchTags } from "@/app/tags/actions";
 import { saveProjectAction } from "../../actions";
 import { cn } from "@/lib/utils";
@@ -70,6 +71,7 @@ export function CalculateProjectForm() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [accessories, setAccessories] = useState<Accessory[]>([]);
   const [printerProfiles, setPrinterProfiles] = useState<PrinterProfile[]>([]);
+  const [electricityProfiles, setElectricityProfiles] = useState<ElectricityProfile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State for tags autocomplete
@@ -83,16 +85,18 @@ export function CalculateProjectForm() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [materialsData, accessoriesData, profilesData, tagsData] = await Promise.all([
+        const [materialsData, accessoriesData, profilesData, tagsData, electricityData] = await Promise.all([
           fetchMaterials(),
           fetchAccessories(),
           fetchPrinterProfiles(),
           fetchTags(),
+          fetchElectricityProfiles(),
         ]);
         setMaterials(materialsData || []);
         setAccessories(accessoriesData || []);
         setPrinterProfiles(profilesData || []);
         setAllTags(tagsData || []);
+        setElectricityProfiles(electricityData || []);
       } catch (error) {
         toast({ title: "Error", description: "No se pudieron cargar los datos maestros.", variant: "destructive" });
       }
@@ -220,7 +224,7 @@ export function CalculateProjectForm() {
             tiempoPostProcesadoHoras: hhmmToHours(values.inputsOriginales.tiempoPostProcesadoHoras || "00:00"),
         }
     };
-    return calculateProjectCost(processedValues, materials, printerProfiles, accessories);
+    return calculateProjectCost(processedValues, materials, printerProfiles, accessories, electricityProfiles);
   };
 
   async function onCalculate(values: z.infer<typeof projectSchema>) {
@@ -660,5 +664,3 @@ function ResultRow({ label, value, bold, primary, accent }: ResultRowProps) {
         </div>
     );
 }
-
-    

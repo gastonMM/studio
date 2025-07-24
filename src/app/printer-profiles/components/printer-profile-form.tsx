@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { PrinterProfile, PrinterProfileFormData } from "@/types";
+import type { PrinterProfile, PrinterProfileFormData, ElectricityProfile } from "@/types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,17 +17,18 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { savePrinterProfileAction } from "../actions";
+import { useState, useEffect } from "react";
+import { savePrinterProfileAction, fetchElectricityProfiles } from "../actions";
 import { Loader2 } from "lucide-react";
 
 const profileSchema = z.object({
   nombrePerfilImpresora: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
   modeloImpresora: z.string().optional(),
   consumoEnergeticoImpresoraWatts: z.coerce.number().min(0, "Debe ser cero o positivo.").optional(),
-  costoKWhElectricidad: z.coerce.number().min(0, "Debe ser cero o positivo.").optional(),
+  electricityProfileId: z.string().min(1, "Debe seleccionar un perfil eléctrico."),
   costoAdquisicionImpresora: z.coerce.number().min(0, "Debe ser cero o positivo.").optional(),
   vidaUtilEstimadaHorasImpresora: z.coerce.number().positive("La vida útil debe ser un número positivo.").optional(),
   porcentajeFallasEstimado: z.coerce.number().min(0).max(100, "Debe ser un porcentaje entre 0 y 100.").optional(),
@@ -43,6 +44,15 @@ export function PrinterProfileForm({ profile }: PrinterProfileFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [electricityProfiles, setElectricityProfiles] = useState<ElectricityProfile[]>([]);
+
+  useEffect(() => {
+    async function loadElectricityProfiles() {
+        const data = await fetchElectricityProfiles();
+        setElectricityProfiles(data);
+    }
+    loadElectricityProfiles();
+  }, [])
 
   const form = useForm<PrinterProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -50,7 +60,7 @@ export function PrinterProfileForm({ profile }: PrinterProfileFormProps) {
       nombrePerfilImpresora: "",
       modeloImpresora: "",
       consumoEnergeticoImpresoraWatts: 200,
-      costoKWhElectricidad: 40,
+      electricityProfileId: "",
       costoAdquisicionImpresora: 1200000,
       vidaUtilEstimadaHorasImpresora: 4000,
       porcentajeFallasEstimado: 5,
@@ -125,14 +135,22 @@ export function PrinterProfileForm({ profile }: PrinterProfileFormProps) {
                         <FormMessage />
                     </FormItem>
                 )} />
-                <FormField control={form.control} name="costoKWhElectricidad"
+                <FormField
+                    control={form.control}
+                    name="electricityProfileId"
                     render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Costo KWh (ARS)</FormLabel>
-                        <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
+                        <FormItem>
+                            <FormLabel>Perfil Eléctrico</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar perfil eléctrico" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {electricityProfiles.map(p => <SelectItem key={p.id} value={p.id}>{p.nombrePerfil}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField control={form.control} name="porcentajeFallasEstimado"
                     render={({ field }) => (
                     <FormItem>

@@ -12,6 +12,7 @@ import {
   BookOpen,
   Settings,
   Tags,
+  Zap,
 } from "lucide-react";
 import {
   Accordion,
@@ -37,6 +38,7 @@ const settingsNavItems = [
   { href: "/materials", label: "Materiales", icon: Layers },
   { href: "/accessories", label: "Accesorios", icon: Wrench },
   { href: "/printer-profiles", label: "Perfiles Impresora", icon: Printer },
+  { href: "/electricity-profiles", label: "Electricidad", icon: Zap },
   { href: "/tags", label: "Etiquetas", icon: Tags },
 ];
 
