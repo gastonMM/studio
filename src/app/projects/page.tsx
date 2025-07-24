@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Filter, X } from "lucide-react";
 import Link from "next/link";
@@ -23,13 +23,13 @@ export default function SavedProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
 
-  useState(() => {
+  useEffect(() => {
     async function loadProjects() {
       const fetchedProjects = await fetchProjects();
       setProjects(fetchedProjects);
     }
     loadProjects();
-  });
+  }, []);
 
   const allTags = useMemo(() => {
     const tags = new Set<string>();
