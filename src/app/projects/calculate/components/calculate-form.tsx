@@ -19,9 +19,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { PlusCircle, Trash2, Loader2, CalculatorIcon, Upload, X } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, CalculatorIcon, Upload, X, Tags } from "lucide-react";
 import Image from "next/image";
 import { calculateProjectCost } from "@/lib/calculation";
 
@@ -40,6 +41,7 @@ const hhmmToHours = (hhmm: string): number => {
 export const projectSchema = z.object({
   nombreProyecto: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
   imageUrls: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
   materialUsadoId: z.string().min(1, "Debe seleccionar un material."),
   configuracionImpresoraIdUsada: z.string().min(1, "Debe seleccionar un perfil de impresora."),
   inputsOriginales: z.object({
@@ -62,6 +64,7 @@ export function CalculateProjectForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [calculatedResults, setCalculatedResults] = useState<Project["resultadosCalculados"] | null>(null);
+  const [tagInput, setTagInput] = useState("");
   
   const [materials, setMaterials] = useState<Material[]>([]);
   const [accessories, setAccessories] = useState<Accessory[]>([]);
@@ -91,6 +94,7 @@ export function CalculateProjectForm() {
     defaultValues: {
       nombreProyecto: "",
       imageUrls: [],
+      tags: [],
       materialUsadoId: "",
       configuracionImpresoraIdUsada: "",
       inputsOriginales: {
@@ -105,17 +109,23 @@ export function CalculateProjectForm() {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: accessoryFields, append: appendAccessory, remove: removeAccessory } = useFieldArray({
     control: form.control,
     name: "accesoriosUsadosEnProyecto",
   });
   
+  const { fields: tagFields, append: appendTag, remove: removeTag } = useFieldArray({
+      control: form.control,
+      name: "tags",
+  });
+
   const { remove: removeImage } = useFieldArray({
     control: form.control,
     name: "imageUrls"
   });
 
   const imageUrls = form.watch("imageUrls");
+  const tags = form.watch("tags") || [];
   
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -136,6 +146,17 @@ export function CalculateProjectForm() {
      // Reset file input to allow re-uploading the same file
     if(fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim() !== '') {
+      e.preventDefault();
+      const newTag = tagInput.trim().toLowerCase();
+      if (!tags.includes(newTag)) {
+        appendTag(newTag);
+      }
+      setTagInput('');
     }
   };
 
@@ -174,6 +195,7 @@ export function CalculateProjectForm() {
     const projectToSave: Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo'> & { id?: string } = {
       ...values,
       imageUrls: values.imageUrls,
+      tags: values.tags,
       inputsOriginales: {
         ...values.inputsOriginales,
         tiempoImpresionHoras: hhmmToHours(values.inputsOriginales.tiempoImpresionHoras),
@@ -284,6 +306,34 @@ export function CalculateProjectForm() {
                   <FormMessage />
                 </FormItem>
 
+                <FormItem>
+                  <FormLabel>Etiquetas</FormLabel>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <Tags className="h-5 w-5 text-muted-foreground" />
+                        <Input 
+                            placeholder="Escribe una etiqueta y presiona Enter" 
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyDown={handleTagKeyDown}
+                        />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {tags.map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                                {tag}
+                                <button type="button" onClick={() => removeTag(index)} className="rounded-full hover:bg-destructive/20 p-0.5">
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </Badge>
+                        ))}
+                    </div>
+                  </div>
+                  <FormDescription>Ayuda a categorizar y encontrar proyectos más tarde.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -388,12 +438,12 @@ export function CalculateProjectForm() {
             <Card>
               <CardHeader>
                 <CardTitle>Accesorios Utilizados</CardTitle>
-                  <Button type="button" variant="outline" size="sm" onClick={() => append({ accesorioId: "", cantidadUsadaPorPieza: 1 })}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => appendAccessory({ accesorioId: "", cantidadUsadaPorPieza: 1 })}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Agregar Accesorio
                   </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {fields.map((item, index) => (
+                {accessoryFields.map((item, index) => (
                   <div key={item.id} className="flex items-end gap-2 p-3 border rounded-md">
                     <FormField
                       control={form.control}
@@ -422,12 +472,12 @@ export function CalculateProjectForm() {
                         </FormItem>
                       )}
                     />
-                    <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                    <Button type="button" variant="destructive" size="icon" onClick={() => removeAccessory(index)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
-                {fields.length === 0 && <p className="text-sm text-muted-foreground">No se han agregado accesorios.</p>}
+                {accessoryFields.length === 0 && <p className="text-sm text-muted-foreground">No se han agregado accesorios.</p>}
               </CardContent>
             </Card>
             

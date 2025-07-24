@@ -1,4 +1,5 @@
 
+
 export interface Material {
   id: string; // Corresponds to AUTO_INCREMENT PRIMARY KEY
   nombreMaterial: string;
@@ -51,6 +52,7 @@ export interface Project {
   id: string; // Corresponds to AUTO_INCREMENT PRIMARY KEY
   nombreProyecto: string;
   imageUrls: string[]; // Stored as JSON string in DB
+  tags: string[]; // Added for categorization
   fechaCreacion: Date;
   fechaUltimoCalculo: Date;
   

@@ -1,10 +1,11 @@
 
+
 "use client";
 
 import type { Project } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, BookOpen } from "lucide-react";
+import { Edit, Trash2, BookOpen, Tag } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -59,8 +60,8 @@ export function ProjectList({ projects }: ProjectListProps) {
     return (
       <div className="text-center py-10 text-muted-foreground border-2 border-dashed rounded-lg">
         <BookOpen className="mx-auto h-12 w-12 mb-4" />
-        <h3 className="text-xl font-semibold">Tu catálogo está vacío</h3>
-        <p className="mt-2">Guarda tu primera calculación para empezar a construir tu catálogo.</p>
+        <h3 className="text-xl font-semibold">No se encontraron proyectos</h3>
+        <p className="mt-2">Intenta ajustar tus filtros o guarda un nuevo cálculo.</p>
         <Button asChild className="mt-4">
           <Link href="/projects/calculate">Crear Nuevo Proyecto</Link>
         </Button>
@@ -113,23 +114,35 @@ export function ProjectList({ projects }: ProjectListProps) {
             <div className="p-6">
               <CardTitle>{project.nombreProyecto}</CardTitle>
               <CardDescription>
-                  Creado el {new Date(project.fechaCreacion).toLocaleDateString('es-AR')}
+                  Creado el {new Date(project.fechaCreacion).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="flex-grow space-y-2 px-6">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">Costo Total (Pieza):</span>
-              <Badge variant="secondary">
-                {project.resultadosCalculados?.costoTotalPieza.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) ?? 'N/A'}
-              </Badge>
+          <CardContent className="flex-grow space-y-4 px-6">
+            <div className="space-y-2">
+                <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Costo Total (Pieza):</span>
+                <Badge variant="secondary">
+                    {project.resultadosCalculados?.costoTotalPieza.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) ?? 'N/A'}
+                </Badge>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Precio Venta (Pieza):</span>
+                <Badge>
+                    {project.resultadosCalculados?.precioVentaSugeridoPieza?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) ?? 'N/A'}
+                </Badge>
+                </div>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">Precio Venta (Pieza):</span>
-               <Badge>
-                  {project.resultadosCalculados?.precioVentaSugeridoPieza?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) ?? 'N/A'}
-               </Badge>
-            </div>
+            {project.tags && project.tags.length > 0 && (
+                <div className="border-t pt-4">
+                    <h4 className="text-sm font-medium mb-2 flex items-center"><Tag className="w-4 h-4 mr-2 text-muted-foreground"/>Etiquetas</h4>
+                    <div className="flex flex-wrap gap-2">
+                        {project.tags.map(tag => (
+                            <Badge key={tag} variant="outline">{tag}</Badge>
+                        ))}
+                    </div>
+                </div>
+            )}
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 pt-4">
             <Button variant="outline" size="icon" asChild>

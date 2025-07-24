@@ -1,5 +1,5 @@
 // This is a mock store. In a real application, you'd use a database like Firestore.
-import type { Project, ProjectFormData } from "@/types";
+import type { Project } from "@/types";
 
 let projects: Project[] = [];
 let nextId = 1;
@@ -24,6 +24,7 @@ export async function createProject(
   const newProject: Project = {
     id: `proj${nextId++}`,
     ...projectData,
+    tags: projectData.tags || [],
     fechaCreacion: now,
     fechaUltimoCalculo: now,
   };
@@ -31,7 +32,7 @@ export async function createProject(
   return newProject;
 }
 
-export async function updateProject(id: string, projectData: Partial<ProjectFormData>): Promise<Project | null> {
+export async function updateProject(id: string, projectData: Partial<Project>): Promise<Project | null> {
   const index = projects.findIndex(p => p.id === id);
   if (index === -1) {
     return null;
