@@ -1,67 +1,35 @@
 
 
-"use client";
-
-import { useState, useMemo, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { PlusCircle, Filter, X } from "lucide-react";
+import { PlusCircle, Filter } from "lucide-react";
 import Link from "next/link";
 import { fetchProjects } from "./actions";
 import { fetchTags } from '../tags/actions';
 import { ProjectList } from "./components/project-list";
-import { Project, Tag } from '@/types';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
+import { ProjectFilters } from "./components/project-filters";
+import type { Metadata } from "next";
 
-export default function SavedProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
-  
-  useEffect(() => {
-    async function loadData() {
-        const [projectsData, tagsData] = await Promise.all([
-            fetchProjects(),
-            fetchTags()
-        ]);
-        setProjects(projectsData);
-        setAllTags(tagsData);
-    }
-    loadData();
-  }, []);
+export const metadata: Metadata = {
+  title: "Catálogo de Proyectos - Calculadora Costos 3D Pro",
+  description: "Consulta y gestiona tus proyectos y cálculos guardados.",
+};
 
-  const availableTags = useMemo(() => {
-    return allTags.sort((a,b) => a.name.localeCompare(b.name));
-  }, [allTags]);
+export default async function SavedProjectsPage({
+  searchParams
+}: {
+  searchParams?: {
+    tags?: string;
+  }
+}) {
+  const [projects, allTags] = await Promise.all([
+    fetchProjects(),
+    fetchTags(),
+  ]);
 
+  const selectedTags = searchParams?.tags?.split(',') || [];
 
-  const filteredProjects = useMemo(() => {
-    if (selectedTags.size === 0) {
-      return projects;
-    }
-    return projects.filter(p => 
-      p.tags && p.tags.some(tag => selectedTags.has(tag))
-    );
-  }, [projects, selectedTags]);
-
-  const handleTagToggle = (tagName: string) => {
-    setSelectedTags(prev => {
-      const newTags = new Set(prev);
-      if (newTags.has(tagName)) {
-        newTags.delete(tagName);
-      } else {
-        newTags.add(tagName);
-      }
-      return newTags;
-    });
-  };
+  const filteredProjects = selectedTags.length > 0
+    ? projects.filter(p => p.tags && p.tags.some(tag => selectedTags.includes(tag)))
+    : projects;
 
   return (
     <div className="container mx-auto py-8">
@@ -71,63 +39,13 @@ export default function SavedProjectsPage() {
           <p className="text-muted-foreground">Consulta y gestiona tus proyectos y cálculos guardados.</p>
         </div>
         <div className="flex gap-2">
-           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" /> 
-                Filtrar por Etiqueta
-                {selectedTags.size > 0 && <Badge variant="secondary" className="ml-2">{selectedTags.size}</Badge>}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Etiquetas Disponibles</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {availableTags.length > 0 ? availableTags.map(tag => (
-                <DropdownMenuCheckboxItem
-                  key={tag.id}
-                  checked={selectedTags.has(tag.name)}
-                  onCheckedChange={() => handleTagToggle(tag.name)}
-                >
-                  {tag.name}
-                </DropdownMenuCheckboxItem>
-              )) : (
-                <div className="px-2 py-1.5 text-sm text-muted-foreground">No hay etiquetas.</div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button asChild>
-            <Link href="/projects/calculate">
-              <PlusCircle className="mr-2 h-4 w-4" /> Nueva Calculación
-            </Link>
-          </Button>
+          <ProjectFilters allTags={allTags} />
+          <Link href="/projects/calculate" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+            <PlusCircle className="mr-2 h-4 w-4" /> Nueva Calculación
+          </Link>
         </div>
       </div>
-       {selectedTags.size > 0 && (
-        <div className="mb-4 flex items-center gap-2">
-            <h3 className="text-sm font-medium">Filtros activos:</h3>
-            <div className="flex flex-wrap gap-2">
-            {Array.from(selectedTags).map(tag => (
-                <Badge 
-                    key={tag} 
-                    className="border-transparent"
-                    style={{ 
-                        backgroundColor: availableTags.find(t => t.name === tag)?.color, 
-                        color: "hsl(var(--primary-foreground))"
-                    }}
-                >
-                {tag}
-                <button onClick={() => handleTagToggle(tag)} className="ml-1 rounded-full p-0.5 hover:bg-destructive/20">
-                    <X className="h-3 w-3" />
-                </button>
-                </Badge>
-            ))}
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setSelectedTags(new Set())}>
-                Limpiar filtros
-            </Button>
-        </div>
-      )}
+      
       <ProjectList projects={filteredProjects} allTags={allTags} />
     </div>
   );
