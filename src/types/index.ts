@@ -48,11 +48,16 @@ export interface AccessoryInProject {
   nombreAccesorio?: string; 
 }
 
+export interface Tag {
+  id: string;
+  name: string;
+}
+
 export interface Project {
   id: string; // Corresponds to AUTO_INCREMENT PRIMARY KEY
   nombreProyecto: string;
   imageUrls: string[]; // Stored as JSON string in DB
-  tags: string[]; // Added for categorization
+  tags: string[]; // Stored as an array of tag names
   fechaCreacion: Date;
   fechaUltimoCalculo: Date;
   
@@ -92,3 +97,4 @@ export type MaterialFormData = Omit<Material, 'id' | 'fechaUltimaActualizacionCo
 export type AccessoryFormData = Omit<Accessory, 'id' | 'fechaUltimaActualizacionCosto' | 'costoPorUnidad'> & { id?: string };
 export type PrinterProfileFormData = Omit<PrinterProfile, 'id' | 'fechaUltimaActualizacionConfig' | 'tasaAmortizacionImpresoraPorHoraUso'> & { id?: string };
 export type ProjectFormData = Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo' | 'resultadosCalculados'> & { id?: string };
+export type TagFormData = Omit<Tag, 'id'>;

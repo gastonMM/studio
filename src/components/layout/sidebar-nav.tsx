@@ -11,7 +11,7 @@ import {
   Calculator,
   BookOpen,
   Settings,
-  ChevronDown
+  Tags,
 } from "lucide-react";
 import {
   Accordion,
@@ -37,6 +37,7 @@ const settingsNavItems = [
   { href: "/materials", label: "Materiales", icon: Layers },
   { href: "/accessories", label: "Accesorios", icon: Wrench },
   { href: "/printer-profiles", label: "Perfiles Impresora", icon: Printer },
+  { href: "/tags", label: "Etiquetas", icon: Tags },
 ];
 
 export function SidebarNav() {
