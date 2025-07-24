@@ -24,18 +24,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  devIndicators: {
-    buildActivity: false,
-  },
   // The following is a workaround for a development-only bug when running inside a container.
   experimental: {
     // This is needed to DEV but not for build
-    serverComponentsExternalPackages: ['@whatwg-node/fetch'],
     // This is needed to run the dev server in a container
-    outputFileTracingRoot: process.env.NEXT_PUBLIC_VERCEL_ENV
+  },
+  serverExternalPackages: ['@whatwg-node/fetch'],
+  outputFileTracingRoot: process.env.NEXT_PUBLIC_VERCEL_ENV
       ? undefined
       : require('path').join(__dirname, '../../'),
-  },
 };
 
 export default nextConfig;
