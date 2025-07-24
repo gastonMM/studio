@@ -33,7 +33,7 @@ import { fetchMaterials } from "@/app/materials/actions";
 import { fetchAccessories } from "@/app/accessories/actions";
 import { fetchPrinterProfiles } from "@/app/printer-profiles/actions";
 import { fetchElectricityProfiles } from "@/app/electricity-profiles/actions";
-import { fetchTags } from "@/app/tags/actions";
+import { fetchTags, saveTagAction } from "@/app/tags/actions";
 import { saveProjectAction } from "../../actions";
 import { cn } from "@/lib/utils";
 
@@ -270,6 +270,20 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
         setIsSubmitting(false);
         return;
     }
+
+    // Handle new tags creation
+    try {
+        const existingTagNames = new Set(allTags.map(t => t.name));
+        const newTagNames = values.tags?.filter(t => !existingTagNames.has(t)) || [];
+        for (const tagName of newTagNames) {
+            // We don't need to wait for this to complete to save the project
+            saveTagAction({ name: tagName, color: '' }); // Color will be randomized by service
+        }
+    } catch(e) {
+        console.error("Error creating new tags", e);
+        // We can still proceed with saving the project
+    }
+
 
     const projectToSave: Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo'> & { id?: string } = {
       id: projectToEdit?.id,

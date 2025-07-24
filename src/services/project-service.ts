@@ -1,6 +1,5 @@
 
 import type { Project } from "@/types";
-import { createTag, getTags } from './tag-service';
 
 let projects: Project[] = [];
 let nextId = 1;
@@ -21,23 +20,12 @@ export async function createProject(
   if (!projectData.nombreProyecto) {
     throw new Error("El nombre del proyecto es obligatorio.");
   }
-  
-  const allTags = await getTags();
-  const allTagNames = new Set(allTags.map(t => t.name));
-  const projectTags = projectData.tags || [];
-  
-  // Create any new tags that don't exist
-  for (const tagName of projectTags) {
-    if (!allTagNames.has(tagName)) {
-      await createTag({ name: tagName, color: '' }); // Color will be randomized by service
-    }
-  }
 
   const now = new Date();
   const newProject: Project = {
     id: `proj${nextId++}`,
     ...projectData,
-    tags: projectTags,
+    tags: projectData.tags || [],
     fechaCreacion: now,
     fechaUltimoCalculo: now,
   };
