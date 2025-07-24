@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Button } from "@/components/ui/button";
-import { Filter, X } from "lucide-react";
+import { Filter, X, Search } from "lucide-react";
 import { Tag } from '@/types';
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Input } from '@/components/ui/input';
 
 interface ProjectFiltersProps {
     allTags: Tag[];
@@ -31,9 +32,26 @@ export function ProjectFilters({ allTags }: ProjectFiltersProps) {
     return new Set(tags ? tags.split(',') : []);
   }, [searchParams]);
 
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+
   const availableTags = useMemo(() => {
     return allTags.sort((a,b) => a.name.localeCompare(b.name));
   }, [allTags]);
+  
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const params = new URLSearchParams(searchParams);
+      if (searchTerm) {
+        params.set('search', searchTerm);
+      } else {
+        params.delete('search');
+      }
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`);
+      });
+    }, 300); // 300ms debounce
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, pathname, router, searchParams]);
 
   const handleTagToggle = (tagName: string) => {
     const newTags = new Set(selectedTags);
@@ -56,25 +74,39 @@ export function ProjectFilters({ allTags }: ProjectFiltersProps) {
   };
 
   const clearFilters = () => {
+    setSearchTerm('');
     const params = new URLSearchParams(searchParams);
     params.delete('tags');
+    params.delete('search');
     startTransition(() => {
         router.replace(`${pathname}?${params.toString()}`);
     });
   }
 
+  const hasActiveFilters = selectedTags.size > 0 || searchTerm !== '';
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 w-full">
+      <div className="relative flex-grow">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input 
+          placeholder="Buscar por nombre..."
+          className="pl-9"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">
+          <Button variant="outline" className="shrink-0">
             <Filter className="mr-2 h-4 w-4" /> 
-            Filtrar por Etiqueta
+            Etiquetas
             {selectedTags.size > 0 && <Badge variant="secondary" className="ml-2">{selectedTags.size}</Badge>}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">
-          <DropdownMenuLabel>Etiquetas Disponibles</DropdownMenuLabel>
+          <DropdownMenuLabel>Filtrar por Etiqueta</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {availableTags.length > 0 ? availableTags.map(tag => (
             <DropdownMenuCheckboxItem
@@ -90,29 +122,11 @@ export function ProjectFilters({ allTags }: ProjectFiltersProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-       {selectedTags.size > 0 && (
-        <div className="flex items-center gap-2">
-            <div className="flex flex-wrap gap-2">
-            {Array.from(selectedTags).map(tag => (
-                <Badge 
-                    key={tag} 
-                    className="border-transparent"
-                    style={{ 
-                        backgroundColor: availableTags.find(t => t.name === tag)?.color, 
-                        color: "hsl(var(--primary-foreground))"
-                    }}
-                >
-                {tag}
-                <button onClick={() => handleTagToggle(tag)} className="ml-1 rounded-full p-0.5 hover:bg-destructive/20">
-                    <X className="h-3 w-3" />
-                </button>
-                </Badge>
-            ))}
-            </div>
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Limpiar
-            </Button>
-        </div>
+       {hasActiveFilters && (
+          <Button variant="ghost" onClick={clearFilters}>
+              <X className="mr-2 h-4 w-4" />
+              Limpiar filtros
+          </Button>
       )}
     </div>
   );
