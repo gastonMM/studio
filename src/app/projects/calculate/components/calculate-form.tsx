@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { ProjectFormData, Material, Accessory, PrinterProfile, AccessoryInProject, Project, Tag } from "@/types";
+import type { ProjectFormData, Material, Accessory, PrinterProfile, Project, Tag } from "@/types";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -33,6 +32,7 @@ import { fetchAccessories } from "@/app/accessories/actions";
 import { fetchPrinterProfiles } from "@/app/printer-profiles/actions";
 import { fetchTags } from "@/app/tags/actions";
 import { saveProjectAction } from "../../actions";
+import { cn } from "@/lib/utils";
 
 const hhmmToHours = (hhmm: string): number => {
     if (!hhmm || !/^\d{1,3}:\d{2}$/.test(hhmm)) return 0;
@@ -66,13 +66,19 @@ export function CalculateProjectForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [calculatedResults, setCalculatedResults] = useState<Project["resultadosCalculados"] | null>(null);
-  const [tagInput, setTagInput] = useState("");
   
   const [materials, setMaterials] = useState<Material[]>([]);
   const [accessories, setAccessories] = useState<Accessory[]>([]);
   const [printerProfiles, setPrinterProfiles] = useState<PrinterProfile[]>([]);
-  const [allTags, setAllTags] = useState<Tag[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // State for tags autocomplete
+  const [tagInput, setTagInput] = useState("");
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [tagSuggestions, setTagSuggestions] = useState<Tag[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const tagsInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -154,14 +160,48 @@ export function CalculateProjectForm() {
     }
   };
 
+  const addTag = (tagName: string) => {
+    const trimmedTag = tagName.trim();
+    if (trimmedTag && !tags.includes(trimmedTag)) {
+      appendTag(trimmedTag);
+    }
+    setTagInput('');
+    setShowSuggestions(false);
+    setActiveSuggestionIndex(-1);
+  };
+  
+  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTagInput(value);
+    setActiveSuggestionIndex(-1);
+    if (value) {
+      const filtered = allTags.filter(tag => 
+        tag.name.toLowerCase().includes(value.toLowerCase()) && !tags.includes(tag.name)
+      );
+      setTagSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
   const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && tagInput.trim() !== '') {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
-      const newTagName = tagInput.trim();
-      if (!tags.includes(newTagName)) {
-        appendTag(newTagName);
+      setActiveSuggestionIndex(prev => Math.min(prev + 1, tagSuggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveSuggestionIndex(prev => Math.max(prev - 1, -1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeSuggestionIndex > -1) {
+        addTag(tagSuggestions[activeSuggestionIndex].name);
+      } else {
+        addTag(tagInput);
       }
-      setTagInput('');
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      setActiveSuggestionIndex(-1);
     }
   };
 
@@ -318,33 +358,58 @@ export function CalculateProjectForm() {
 
                 <FormItem>
                   <FormLabel>Etiquetas</FormLabel>
-                  <div className="flex flex-col gap-2">
+                  <div className="relative">
                     <div className="flex items-center gap-2">
-                        <TagsIcon className="h-5 w-5 text-muted-foreground" />
-                        <Input 
-                            placeholder="Escribe el nombre de una etiqueta y presiona Enter" 
-                            value={tagInput}
-                            onChange={(e) => setTagInput(e.target.value)}
-                            onKeyDown={handleTagKeyDown}
-                        />
+                      <TagsIcon className="h-5 w-5 text-muted-foreground" />
+                      <Input 
+                        ref={tagsInputRef}
+                        placeholder="Escribe para buscar o crear una etiqueta..." 
+                        value={tagInput}
+                        onChange={handleTagInputChange}
+                        onKeyDown={handleTagKeyDown}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} // Delay to allow click on suggestion
+                      />
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        {tags.map((tag, index) => (
-                            <Badge 
-                                key={index} 
-                                className="flex items-center gap-1 border-transparent"
-                                style={{ 
-                                  backgroundColor: getTagColor(tag), 
-                                  color: "hsl(var(--primary-foreground))"
+                    {showSuggestions && tagSuggestions.length > 0 && (
+                      <Card className="absolute z-10 w-full mt-1 max-h-48 overflow-y-auto">
+                        <CardContent className="p-1">
+                          <ul>
+                            {tagSuggestions.map((suggestion, index) => (
+                              <li 
+                                key={suggestion.id}
+                                className={cn(
+                                  "p-2 rounded-md cursor-pointer hover:bg-accent",
+                                  index === activeSuggestionIndex && "bg-accent"
+                                )}
+                                onMouseDown={(e) => { // use onMouseDown to fire before onBlur
+                                  e.preventDefault();
+                                  addTag(suggestion.name)
                                 }}
-                            >
-                                {tag}
-                                <button type="button" onClick={() => removeTag(index)} className="rounded-full hover:bg-destructive/20 p-0.5">
-                                    <X className="h-3 w-3" />
-                                </button>
-                            </Badge>
-                        ))}
-                    </div>
+                              >
+                                {suggestion.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {tags.map((tag, index) => (
+                      <Badge 
+                        key={index} 
+                        className="flex items-center gap-1 border-transparent"
+                        style={{ 
+                          backgroundColor: getTagColor(tag), 
+                          color: "hsl(var(--primary-foreground))"
+                        }}
+                      >
+                        {tag}
+                        <button type="button" onClick={() => removeTag(index)} className="rounded-full hover:bg-destructive/20 p-0.5">
+                            <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
                   </div>
                   <FormDescription>Si la etiqueta no existe, se creará con un color aleatorio. Puedes cambiarlo luego en la sección de configuración.</FormDescription>
                   <FormMessage />
@@ -595,3 +660,5 @@ function ResultRow({ label, value, bold, primary, accent }: ResultRowProps) {
         </div>
     );
 }
+
+    
