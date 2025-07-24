@@ -4,7 +4,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   Layers, 
   Wrench, 
   Printer,
@@ -31,7 +30,6 @@ import { cn } from "@/lib/utils";
 const mainNavItems = [
   { href: "/projects", label: "Catálogo", icon: BookOpen },
   { href: "/projects/calculate", label: "Nueva Calculación", icon: Calculator },
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
 ];
 
 const settingsNavItems = [
