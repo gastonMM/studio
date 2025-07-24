@@ -133,18 +133,16 @@ export function TagForm({ tag }: TagFormProps) {
                                     variant="outline"
                                     role="combobox"
                                     className={cn(
-                                    "w-[280px] justify-between",
+                                    "w-auto justify-start p-2",
                                     !field.value && "text-muted-foreground"
                                     )}
                                 >
                                     <div className="flex items-center gap-2">
                                         <div 
-                                            className="w-4 h-4 rounded-full border" 
+                                            className="w-8 h-5 rounded-sm border" 
                                             style={{ backgroundColor: field.value }}
                                         />
-                                        {field.value}
                                     </div>
-                                    <Palette className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </FormControl>
                         </PopoverTrigger>
@@ -201,5 +199,3 @@ export function TagForm({ tag }: TagFormProps) {
     </Card>
   );
 }
-
-    
