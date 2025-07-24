@@ -650,16 +650,8 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
                     <ResultRow label="Precio Venta Sugerido (Lote):" value={calculatedResults.precioVentaSugeridoLote} bold accent />
                   </>
                 ) : (
-                  <div className="text-center py-8">
-                    <Image 
-                      src="https://placehold.co/300x200.png"
-                      alt="Waiting for calculation" 
-                      width={300}
-                      height={200}
-                      data-ai-hint="calculator chart"
-                      className="rounded-md mb-4 inline-block opacity-50"
-                    />
-                    <p className="text-muted-foreground">Ingrese los datos y presione "Calcular Costos" para ver los resultados.</p>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Ingrese los datos y presione "Calcular Costos" para ver los resultados.</p>
                   </div>
                 )}
               </CardContent>
