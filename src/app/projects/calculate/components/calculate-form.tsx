@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -17,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +45,7 @@ const hhmmToHours = (hhmm: string): number => {
 
 export const projectSchema = z.object({
   nombreProyecto: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
+  descripcionProyecto: z.string().optional(),
   imageUrls: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   materialUsadoId: z.string().min(1, "Debe seleccionar un material."),
@@ -62,7 +65,7 @@ export const projectSchema = z.object({
 });
 
 
-export function CalculateProjectForm() {
+export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Project }) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -103,11 +106,27 @@ export function CalculateProjectForm() {
     }
     loadData();
   }, [toast]);
+  
+  const hoursToHhmm = (hours: number | undefined): string => {
+    if (hours === undefined || hours === null) return "00:00";
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  };
 
   const form = useForm<z.infer<typeof projectSchema>>({
     resolver: zodResolver(projectSchema),
-    defaultValues: {
+    defaultValues: projectToEdit ? {
+        ...projectToEdit,
+        inputsOriginales: {
+            ...projectToEdit.inputsOriginales,
+            tiempoImpresionHoras: hoursToHhmm(projectToEdit.inputsOriginales.tiempoImpresionHoras),
+            tiempoLaborOperativaHoras: hoursToHhmm(projectToEdit.inputsOriginales.tiempoLaborOperativaHoras),
+            tiempoPostProcesadoHoras: hoursToHhmm(projectToEdit.inputsOriginales.tiempoPostProcesadoHoras),
+        }
+    } : {
       nombreProyecto: "",
+      descripcionProyecto: "",
       imageUrls: [],
       tags: [],
       materialUsadoId: "",
@@ -123,6 +142,12 @@ export function CalculateProjectForm() {
       accesoriosUsadosEnProyecto: [],
     },
   });
+
+  useEffect(() => {
+    if (projectToEdit) {
+      setCalculatedResults(projectToEdit.resultadosCalculados ?? null);
+    }
+  }, [projectToEdit]);
 
   const { fields: accessoryFields, append: appendAccessory, remove: removeAccessory } = useFieldArray({
     control: form.control,
@@ -247,6 +272,7 @@ export function CalculateProjectForm() {
     }
 
     const projectToSave: Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo'> & { id?: string } = {
+      id: projectToEdit?.id,
       ...values,
       imageUrls: values.imageUrls,
       tags: values.tags,
@@ -269,7 +295,7 @@ export function CalculateProjectForm() {
     try {
       const response = await saveProjectAction(projectToSave);
       if (response.success) {
-        toast({ title: "Proyecto Guardado", description: "El cálculo ha sido guardado correctamente en tu catálogo." });
+        toast({ title: projectToEdit ? "Proyecto Actualizado" : "Proyecto Guardado", description: "El cálculo ha sido guardado correctamente en tu catálogo." });
         router.push("/projects");
         router.refresh();
       } else {
@@ -301,6 +327,18 @@ export function CalculateProjectForm() {
                     <FormItem>
                       <FormLabel>Nombre del Proyecto</FormLabel>
                       <FormControl><Input placeholder="Ej: Llavero personalizado" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="descripcionProyecto"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descripción del Producto</FormLabel>
+                      <FormControl><Textarea placeholder="Describe brevemente el producto para el catálogo..." {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -631,7 +669,7 @@ export function CalculateProjectForm() {
                 </Button>
                 <Button type="button" onClick={form.handleSubmit(onSave)} disabled={isSubmitting || !calculatedResults} className="w-full" size="lg">
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Guardar Cálculo
+                  {projectToEdit ? "Actualizar Cálculo" : "Guardar Cálculo"}
                 </Button>
               </CardFooter>
             </Card>

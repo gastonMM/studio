@@ -1,6 +1,7 @@
 
 
 
+
 "use client";
 
 import type { Project, Tag } from "@/types";
@@ -120,14 +121,19 @@ export function ProjectList({ projects, allTags }: ProjectListProps) {
                 </>
               )}
             </Carousel>
-            <div className="p-6">
+            <div className="p-6 pb-0">
               <CardTitle>{project.nombreProyecto}</CardTitle>
               <CardDescription>
                   Creado el {new Date(project.fechaCreacion).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="flex-grow space-y-4 px-6">
+          <CardContent className="flex-grow space-y-4 px-6 pt-4">
+            {project.descripcionProyecto && (
+                <p className="text-sm text-muted-foreground italic line-clamp-2">
+                    {project.descripcionProyecto}
+                </p>
+            )}
             <div className="space-y-2">
                 <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Costo Total (Pieza):</span>

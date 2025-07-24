@@ -1,20 +1,26 @@
-
+import { fetchProjectById } from "../../actions";
+import { notFound } from "next/navigation";
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
-// No need for "use client" here if the page itself doesn't need client hooks
-// and we pass server-side data to the client component.
 
-const CalculateProjectForm = dynamic(() => import('./components/calculate-form').then(mod => mod.CalculateProjectForm), { 
+const CalculateProjectForm = dynamic(() => import('../calculate/components/calculate-form').then(mod => mod.CalculateProjectForm), { 
   ssr: false,
   loading: () => <CalculatorFormSkeleton />,
 });
 
-export default function CalculateProjectPage() {
+
+export default async function EditProjectPage({ params }: { params: { id: string } }) {
+  const project = await fetchProjectById(params.id);
+
+  if (!project) {
+    notFound();
+  }
+
   return (
     <div className="container mx-auto py-8">
-      <CalculateProjectForm />
+      <CalculateProjectForm projectToEdit={project} />
     </div>
   );
 }

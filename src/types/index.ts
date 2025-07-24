@@ -65,6 +65,7 @@ export interface Tag {
 export interface Project {
   id: string; // Corresponds to AUTO_INCREMENT PRIMARY KEY
   nombreProyecto: string;
+  descripcionProyecto?: string;
   imageUrls: string[]; // Stored as JSON string in DB
   tags: string[]; // Stored as an array of tag names
   fechaCreacion: Date;
