@@ -13,7 +13,6 @@ import {
   Settings, // For Settings/Configuration (general, if needed later)
 } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -37,7 +36,7 @@ export function SidebarNav() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.href}>
-          <Link href={item.href} passHref legacyBehavior>
+          <Link href={item.href}>
             <SidebarMenuButton
               isActive={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))}
               tooltip={item.label}
