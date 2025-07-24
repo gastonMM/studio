@@ -48,6 +48,15 @@ export interface PrinterProfile {
   fechaUltimaActualizacionConfig: Date; // Timestamp
 }
 
+export interface SalesProfile {
+  id: string;
+  nombrePerfil: string;
+  margenGananciaDirecta: number; // Porcentaje para venta directa
+  comisionMercadoLibre: number; // Porcentaje de comisión de ML
+  costoFijoMercadoLibre: number; // Costo fijo por venta de ML en ARS
+}
+
+
 export interface AccessoryInProject {
   accesorioId: string; // Referencia al accesorio
   cantidadUsadaPorPieza: number;
@@ -73,6 +82,7 @@ export interface Project {
   
   materialUsadoId: string;
   configuracionImpresoraIdUsada: string;
+  perfilVentaIdUsado: string;
   
   accesoriosUsadosEnProyecto: AccessoryInProject[]; // Stored as JSON string
   
@@ -82,7 +92,6 @@ export interface Project {
     tiempoLaborOperativaHoras?: number; // Opcional
     tiempoPostProcesadoHoras?: number; // Opcional
     cantidadPiezasLote: number; // Default: 1
-    margenGananciaDeseadoPorcentaje?: number; // Ej: 30% (input as 30)
   };
   
   resultadosCalculados?: { // Stored as JSON string
@@ -96,8 +105,8 @@ export interface Project {
     costoContingenciaFallasPieza: number;
     costoTotalPieza: number;
     costoTotalLote: number;
-    precioVentaSugeridoPieza?: number;
-    precioVentaSugeridoLote?: number;
+    precioVentaDirecta?: number;
+    precioVentaMercadoLibre?: number;
   };
   notasProyecto?: string;
 }
@@ -107,5 +116,7 @@ export type MaterialFormData = Omit<Material, 'id' | 'fechaUltimaActualizacionCo
 export type AccessoryFormData = Omit<Accessory, 'id' | 'fechaUltimaActualizacionCosto' | 'costoPorUnidad'> & { id?: string };
 export type ElectricityProfileFormData = Omit<ElectricityProfile, 'id' | 'costoPorKWh'> & { id?: string };
 export type PrinterProfileFormData = Omit<PrinterProfile, 'id' | 'fechaUltimaActualizacionConfig' | 'tasaAmortizacionImpresoraPorHoraUso'> & { id?: string };
+export type SalesProfileFormData = Omit<SalesProfile, 'id'> & { id?: string };
 export type ProjectFormData = Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo' | 'resultadosCalculados'> & { id?: string };
 export type TagFormData = Omit<Tag, 'id'>;
+

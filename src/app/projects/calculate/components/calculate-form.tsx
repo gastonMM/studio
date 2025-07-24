@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { ProjectFormData, Material, Accessory, PrinterProfile, Project, Tag, ElectricityProfile } from "@/types";
+import type { ProjectFormData, Material, Accessory, PrinterProfile, Project, Tag, ElectricityProfile, SalesProfile } from "@/types";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -33,6 +33,7 @@ import { fetchMaterials } from "@/app/materials/actions";
 import { fetchAccessories } from "@/app/accessories/actions";
 import { fetchPrinterProfiles } from "@/app/printer-profiles/actions";
 import { fetchElectricityProfiles } from "@/app/electricity-profiles/actions";
+import { fetchSalesProfiles } from "@/app/sales-profiles/actions";
 import { fetchTags, saveTagAction } from "@/app/tags/actions";
 import { saveProjectAction } from "../../actions";
 import { cn } from "@/lib/utils";
@@ -50,13 +51,13 @@ export const projectSchema = z.object({
   tags: z.array(z.string()).optional(),
   materialUsadoId: z.string().min(1, "Debe seleccionar un material."),
   configuracionImpresoraIdUsada: z.string().min(1, "Debe seleccionar un perfil de impresora."),
+  perfilVentaIdUsado: z.string().min(1, "Debe seleccionar un perfil de venta."),
   inputsOriginales: z.object({
     pesoPiezaGramos: z.coerce.number().positive("El peso debe ser positivo."),
     tiempoImpresionHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").min(1, "El tiempo es obligatorio."),
     tiempoLaborOperativaHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").optional(),
     tiempoPostProcesadoHoras: z.string().regex(/^\d{1,3}:\d{2}$/, "El formato debe ser HH:MM.").optional(),
     cantidadPiezasLote: z.coerce.number().int().positive("La cantidad debe ser al menos 1.").default(1),
-    margenGananciaDeseadoPorcentaje: z.coerce.number().min(0, "El margen debe ser cero o positivo."),
   }),
   accesoriosUsadosEnProyecto: z.array(z.object({
     accesorioId: z.string().min(1, "Debe seleccionar un accesorio."),
@@ -75,6 +76,7 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
   const [accessories, setAccessories] = useState<Accessory[]>([]);
   const [printerProfiles, setPrinterProfiles] = useState<PrinterProfile[]>([]);
   const [electricityProfiles, setElectricityProfiles] = useState<ElectricityProfile[]>([]);
+  const [salesProfiles, setSalesProfiles] = useState<SalesProfile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State for tags autocomplete
@@ -88,18 +90,20 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
   useEffect(() => {
     async function loadData() {
       try {
-        const [materialsData, accessoriesData, profilesData, tagsData, electricityData] = await Promise.all([
+        const [materialsData, accessoriesData, printerProfilesData, tagsData, electricityData, salesProfilesData] = await Promise.all([
           fetchMaterials(),
           fetchAccessories(),
           fetchPrinterProfiles(),
           fetchTags(),
           fetchElectricityProfiles(),
+          fetchSalesProfiles(),
         ]);
         setMaterials(materialsData || []);
         setAccessories(accessoriesData || []);
-        setPrinterProfiles(profilesData || []);
+        setPrinterProfiles(printerProfilesData || []);
         setAllTags(tagsData || []);
         setElectricityProfiles(electricityData || []);
+        setSalesProfiles(salesProfilesData || []);
       } catch (error) {
         toast({ title: "Error", description: "No se pudieron cargar los datos maestros.", variant: "destructive" });
       }
@@ -131,13 +135,13 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
       tags: [],
       materialUsadoId: "",
       configuracionImpresoraIdUsada: "",
+      perfilVentaIdUsado: "",
       inputsOriginales: {
         pesoPiezaGramos: 0,
         tiempoImpresionHoras: "00:00",
         tiempoLaborOperativaHoras: "00:00",
         tiempoPostProcesadoHoras: "00:00",
         cantidadPiezasLote: 1,
-        margenGananciaDeseadoPorcentaje: 30,
       },
       accesoriosUsadosEnProyecto: [],
     },
@@ -249,7 +253,7 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
             tiempoPostProcesadoHoras: hhmmToHours(values.inputsOriginales.tiempoPostProcesadoHoras || "00:00"),
         }
     };
-    return calculateProjectCost(processedValues, materials, printerProfiles, accessories, electricityProfiles);
+    return calculateProjectCost(processedValues, materials, printerProfiles, accessories, electricityProfiles, salesProfiles);
   };
 
   async function onCalculate(values: z.infer<typeof projectSchema>) {
@@ -276,12 +280,10 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
         const existingTagNames = new Set(allTags.map(t => t.name));
         const newTagNames = values.tags?.filter(t => !existingTagNames.has(t)) || [];
         for (const tagName of newTagNames) {
-            // We don't need to wait for this to complete to save the project
-            saveTagAction({ name: tagName, color: '' }); // Color will be randomized by service
+            await saveTagAction({ name: tagName, color: '' });
         }
     } catch(e) {
         console.error("Error creating new tags", e);
-        // We can still proceed with saving the project
     }
 
 
@@ -622,13 +624,19 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
             <Card>
               <CardHeader><CardTitle>Precio de Venta</CardTitle></CardHeader>
               <CardContent>
-                  <FormField
+                <FormField
                     control={form.control}
-                    name="inputsOriginales.margenGananciaDeseadoPorcentaje"
+                    name="perfilVentaIdUsado"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Margen de Ganancia Deseado (%)</FormLabel>
-                        <FormControl><Input type="number" step="1" placeholder="Ej: 50" {...field} /></FormControl>
+                        <FormLabel>Perfil de Venta</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar perfil de venta" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {salesProfiles.map(p => <SelectItem key={p.id} value={p.id}>{p.nombrePerfil}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>Define las comisiones y ganancias para cada canal.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -660,8 +668,8 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
                     <ResultRow label="Costo Total por Pieza:" value={calculatedResults.costoTotalPieza} bold primary />
                     <ResultRow label={`Costo Total Lote (${form.getValues("inputsOriginales.cantidadPiezasLote")}u):`} value={calculatedResults.costoTotalLote} bold />
                     <hr className="my-2"/>
-                    <ResultRow label="Precio Venta Sugerido (Pieza):" value={calculatedResults.precioVentaSugeridoPieza} bold accent />
-                    <ResultRow label="Precio Venta Sugerido (Lote):" value={calculatedResults.precioVentaSugeridoLote} bold accent />
+                    <ResultRow label="Precio Venta (Directa):" value={calculatedResults.precioVentaDirecta} bold accent />
+                    <ResultRow label="Precio Venta (ML):" value={calculatedResults.precioVentaMercadoLibre} bold accent />
                   </>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">

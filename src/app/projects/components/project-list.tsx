@@ -2,6 +2,7 @@
 
 
 
+
 "use client";
 
 import type { Project, Tag } from "@/types";
@@ -136,15 +137,21 @@ export function ProjectList({ projects, allTags }: ProjectListProps) {
             )}
             <div className="space-y-2">
                 <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Costo Total (Pieza):</span>
+                <span className="text-muted-foreground">Costo Total:</span>
                 <Badge variant="secondary">
                     {project.resultadosCalculados?.costoTotalPieza.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) ?? 'N/A'}
                 </Badge>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Precio Venta (Pieza):</span>
+                <span className="text-muted-foreground">Venta Directa:</span>
                 <Badge>
-                    {project.resultadosCalculados?.precioVentaSugeridoPieza?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) ?? 'N/A'}
+                    {project.resultadosCalculados?.precioVentaDirecta?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) ?? 'N/A'}
+                </Badge>
+                </div>
+                 <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Venta ML:</span>
+                <Badge>
+                    {project.resultadosCalculados?.precioVentaMercadoLibre?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) ?? 'N/A'}
                 </Badge>
                 </div>
             </div>

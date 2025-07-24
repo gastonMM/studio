@@ -1,17 +1,18 @@
 
-import type { Material, PrinterProfile, Accessory, ElectricityProfile } from '@/types';
+
+import type { Material, PrinterProfile, Accessory, ElectricityProfile, SalesProfile } from '@/types';
 
 // This type mirrors the schema from the calculation page for type safety.
 type CalculationInput = {
     materialUsadoId: string;
     configuracionImpresoraIdUsada: string;
+    perfilVentaIdUsado: string;
     inputsOriginales: {
         pesoPiezaGramos: number;
         tiempoImpresionHoras: number;
         tiempoLaborOperativaHoras?: number;
         tiempoPostProcesadoHoras?: number;
         cantidadPiezasLote: number;
-        margenGananciaDeseadoPorcentaje?: number;
     };
     accesoriosUsadosEnProyecto?: Array<{
         accesorioId: string;
@@ -24,17 +25,22 @@ export function calculateProjectCost(
     materials: Material[],
     printerProfiles: PrinterProfile[],
     accessories: Accessory[],
-    electricityProfiles: ElectricityProfile[]
+    electricityProfiles: ElectricityProfile[],
+    salesProfiles: SalesProfile[]
 ) {
     const material = materials.find(m => m.id === values.materialUsadoId);
     const printerProfile = printerProfiles.find(p => p.id === values.configuracionImpresoraIdUsada);
+    const salesProfile = salesProfiles.find(s => s.id === values.perfilVentaIdUsado);
 
-    if (!material || !printerProfile) {
+
+    if (!material || !printerProfile || !salesProfile) {
+        console.error("Missing master data for calculation:", {material, printerProfile, salesProfile});
         return null; 
     }
     
     const electricityProfile = electricityProfiles.find(ep => ep.id === printerProfile.electricityProfileId);
     if (!electricityProfile) {
+        console.error("Missing electricity profile for calculation:", {printerProfile});
         return null;
     }
 
@@ -44,7 +50,6 @@ export function calculateProjectCost(
         tiempoLaborOperativaHoras = 0,
         tiempoPostProcesadoHoras = 0, 
         cantidadPiezasLote, 
-        margenGananciaDeseadoPorcentaje = 0 
     } = values.inputsOriginales;
 
     const costoKWh = electricityProfile.costoPorKWh;
@@ -72,12 +77,27 @@ export function calculateProjectCost(
     const costoTotalPieza = subTotalCostoDirectoPieza + costoContingenciaFallasPieza;
     const costoTotalLote = costoTotalPieza * cantidadPiezasLote;
     
-    const precioVentaSugeridoPieza = costoTotalPieza * (1 + (margenGananciaDeseadoPorcentaje / 100));
-    const precioVentaSugeridoLote = costoTotalLote * (1 + (margenGananciaDeseadoPorcentaje / 100));
+    // --- Sales Price Calculation ---
+    const { margenGananciaDirecta, comisionMercadoLibre, costoFijoMercadoLibre } = salesProfile;
 
+    // Venta Directa
+    const precioVentaDirecta = costoTotalPieza * (1 + (margenGananciaDirecta / 100));
+
+    // Mercado Libre
+    // La fórmula para que el vendedor reciba (CostoTotalPieza + Ganancia) es:
+    // PrecioDeVenta = (CostoTotalPieza + Ganancia + CostoFijoML) / (1 - ComisionML_%)
+    // Donde Ganancia = CostoTotalPieza * margenGananciaDirecta_%
+    const gananciaDeseada = costoTotalPieza * (margenGananciaDirecta / 100);
+    const comisionMLDecimal = comisionMercadoLibre / 100;
+    
+    let precioVentaMercadoLibre = 0;
+    if (comisionMLDecimal < 1) { // Avoid division by zero
+        precioVentaMercadoLibre = (costoTotalPieza + gananciaDeseada + costoFijoMercadoLibre) / (1 - comisionMLDecimal);
+    }
+    
     return {
       costoMaterialPieza, costoElectricidadPieza, costoAmortizacionPieza, costoLaborOperativaPieza, costoLaborPostProcesadoPieza,
       costoTotalAccesoriosPieza, subTotalCostoDirectoPieza, costoContingenciaFallasPieza, costoTotalPieza, costoTotalLote,
-      precioVentaSugeridoPieza, precioVentaSugeridoLote
+      precioVentaDirecta, precioVentaMercadoLibre
     };
 }

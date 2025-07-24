@@ -12,6 +12,7 @@ import {
   Settings,
   Tags,
   Zap,
+  PercentCircle,
 } from "lucide-react";
 import {
   Accordion,
@@ -37,6 +38,7 @@ const settingsNavItems = [
   { href: "/accessories", label: "Accesorios", icon: Wrench },
   { href: "/printer-profiles", label: "Perfiles Impresora", icon: Printer },
   { href: "/electricity-profiles", label: "Electricidad", icon: Zap },
+  { href: "/sales-profiles", label: "Perfiles de Venta", icon: PercentCircle },
   { href: "/tags", label: "Etiquetas", icon: Tags },
 ];
 
