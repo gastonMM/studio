@@ -1,9 +1,4 @@
-
-
-
-
-
-import { PlusCircle, Tags, LogIn } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { fetchProjects } from "./actions";
 import { fetchTags } from '../tags/actions';
@@ -12,15 +7,6 @@ import { ProjectFilters } from "./components/project-filters";
 import type { Metadata } from "next";
 import { TagManager } from "./components/tag-manager";
 import { RecalculateAllButton } from "./components/recalculate-all-button";
-import { Button } from "@/components/ui/button";
-import { getSession } from "@/lib/session";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Catálogo de Proyectos - Calculadora Costos 3D Pro",
@@ -35,10 +21,9 @@ export default async function SavedProjectsPage({
     search?: string;
   }
 }) {
-  const [projects, allTags, session] = await Promise.all([
+  const [projects, allTags] = await Promise.all([
     fetchProjects(),
     fetchTags(),
-    getSession(),
   ]);
 
   const selectedTags = searchParams?.tags?.split(',') || [];
@@ -59,7 +44,6 @@ export default async function SavedProjectsPage({
         </div>
         <div className="flex gap-2 items-center flex-wrap">
            <ProjectFilters allTags={allTags} />
-           {session && (
             <>
               <RecalculateAllButton />
               <TagManager allTags={allTags} />
@@ -67,30 +51,10 @@ export default async function SavedProjectsPage({
                 <PlusCircle className="mr-2 h-4 w-4" /> Nueva Calculación
               </Link>
             </>
-           )}
         </div>
       </div>
       
-      {!session && (
-        <Card className="mb-8 bg-accent/10 border-accent/20">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-accent">Acceso de Administrador</CardTitle>
-              <CardDescription className="text-accent/80">
-                Inicia sesión para crear, editar y gestionar tus proyectos.
-              </CardDescription>
-            </div>
-            <Button asChild size="lg">
-              <Link href="/login">
-                <LogIn className="mr-2 h-5 w-5" />
-                Iniciar Sesión
-              </Link>
-            </Button>
-          </CardHeader>
-        </Card>
-      )}
-
-      <ProjectList projects={filteredProjects} allTags={allTags} session={session} />
+      <ProjectList projects={filteredProjects} allTags={allTags} />
     </div>
   );
 }

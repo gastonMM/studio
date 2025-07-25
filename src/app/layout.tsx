@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { AppProvider } from '@/components/providers/app-provider';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
-import { getSession } from '@/lib/session';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -25,12 +24,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession();
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}>
         <AppProvider>
-          <SidebarLayout session={session}>
+          <SidebarLayout>
             {children}
           </SidebarLayout>
         </AppProvider>

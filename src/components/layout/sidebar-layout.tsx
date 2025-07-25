@@ -1,29 +1,13 @@
 import type { ReactNode } from "react";
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarInset, SidebarTrigger, SidebarFooter } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarNav } from "./sidebar-nav";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
 import Link from "next/link";
-import { logout } from "@/app/login/actions";
-
-interface Session {
-    username: string;
-}
 
 interface SidebarLayoutProps {
   children: ReactNode;
-  session: Session | null;
 }
 
-export function SidebarLayout({ children, session }: SidebarLayoutProps) {
-  if (!session) {
-      return (
-        <div className="flex flex-col h-screen">
-          <main className="flex-1">{children}</main>
-        </div>
-      );
-  }
-  
+export function SidebarLayout({ children }: SidebarLayoutProps) {
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon" className="border-r">
@@ -42,16 +26,8 @@ export function SidebarLayout({ children, session }: SidebarLayoutProps) {
           </Link>
         </SidebarHeader>
         <SidebarContent className="flex-1 p-2">
-          <SidebarNav session={session} />
+          <SidebarNav />
         </SidebarContent>
-        <SidebarFooter className="p-2">
-            <form action={logout}>
-                <Button variant="ghost" className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-                    <LogOut className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">Cerrar Sesión</span>
-                </Button>
-            </form>
-        </SidebarFooter>
       </Sidebar>
       <SidebarInset className="flex flex-col">
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4">

@@ -1,9 +1,3 @@
-
-
-
-
-
-
 "use client";
 
 import type { Project, Tag } from "@/types";
@@ -41,19 +35,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-
-interface Session {
-    username: string;
-}
 
 interface ProjectListProps {
   projects: Project[];
   allTags: Tag[];
-  session: Session | null;
 }
 
-export function ProjectList({ projects, allTags, session }: ProjectListProps) {
+export function ProjectList({ projects, allTags }: ProjectListProps) {
   const { toast } = useToast();
   const router = useRouter();
 
@@ -78,11 +66,9 @@ export function ProjectList({ projects, allTags, session }: ProjectListProps) {
         <BookOpen className="mx-auto h-12 w-12 mb-4" />
         <h3 className="text-xl font-semibold">No se encontraron proyectos</h3>
         <p className="mt-2">Intenta ajustar tus filtros o guarda un nuevo cálculo.</p>
-        {session && (
-          <Button asChild className="mt-4">
-            <Link href="/projects/calculate">Crear Nuevo Proyecto</Link>
-          </Button>
-        )}
+        <Button asChild className="mt-4">
+          <Link href="/projects/calculate">Crear Nuevo Proyecto</Link>
+        </Button>
       </div>
     );
   }
@@ -182,38 +168,36 @@ export function ProjectList({ projects, allTags, session }: ProjectListProps) {
                 </div>
             )}
           </CardContent>
-          {session && (
-            <CardFooter className="flex justify-end gap-2 p-6 pt-4">
-              <Button variant="outline" size="icon" asChild>
-                <Link href={`/projects/edit/${project.id}`} title="Recalcular/Editar">
-                  <Edit className="h-4 w-4" />
-                  <span className="sr-only">Recalcular/Editar</span>
-                </Link>
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="icon" title="Eliminar">
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Eliminar</span>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta acción no se puede deshacer. Esto eliminará permanentemente el proyecto del catálogo.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDelete(project.id)}>
-                      Eliminar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardFooter>
-          )}
+          <CardFooter className="flex justify-end gap-2 p-6 pt-4">
+            <Button variant="outline" size="icon" asChild>
+              <Link href={`/projects/edit/${project.id}`} title="Recalcular/Editar">
+                <Edit className="h-4 w-4" />
+                <span className="sr-only">Recalcular/Editar</span>
+              </Link>
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="icon" title="Eliminar">
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Eliminar</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Esto eliminará permanentemente el proyecto del catálogo.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => handleDelete(project.id)}>
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardFooter>
         </Card>
       ))}
     </div>
