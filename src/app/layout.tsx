@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { AppProvider } from '@/components/providers/app-provider';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
+import { getSession } from '@/lib/session';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -19,16 +20,17 @@ export const metadata: Metadata = {
   description: 'Calcula costos de impresión 3D y precios de venta.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}>
         <AppProvider>
-          <SidebarLayout>
+          <SidebarLayout session={session}>
             {children}
           </SidebarLayout>
         </AppProvider>
