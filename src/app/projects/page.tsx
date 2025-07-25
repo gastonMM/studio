@@ -2,7 +2,8 @@
 
 
 
-import { PlusCircle, Tags } from "lucide-react";
+
+import { PlusCircle, Tags, LogIn } from "lucide-react";
 import Link from "next/link";
 import { fetchProjects } from "./actions";
 import { fetchTags } from '../tags/actions';
@@ -13,6 +14,13 @@ import { TagManager } from "./components/tag-manager";
 import { RecalculateAllButton } from "./components/recalculate-all-button";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/session";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Catálogo de Proyectos - Calculadora Costos 3D Pro",
@@ -63,6 +71,25 @@ export default async function SavedProjectsPage({
         </div>
       </div>
       
+      {!session && (
+        <Card className="mb-8 bg-accent/10 border-accent/20">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-accent">Acceso de Administrador</CardTitle>
+              <CardDescription className="text-accent/80">
+                Inicia sesión para crear, editar y gestionar tus proyectos.
+              </CardDescription>
+            </div>
+            <Button asChild size="lg">
+              <Link href="/login">
+                <LogIn className="mr-2 h-5 w-5" />
+                Iniciar Sesión
+              </Link>
+            </Button>
+          </CardHeader>
+        </Card>
+      )}
+
       <ProjectList projects={filteredProjects} allTags={allTags} session={session} />
     </div>
   );

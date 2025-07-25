@@ -3,8 +3,6 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getSessionFromCookie } from './lib/session';
  
-const publicRoutes = ['/login', '/projects'];
-
 const protectedRoutes = [
     '/',
     '/accessories',
@@ -26,9 +24,9 @@ const protectedRoutes = [
     '/sales-profiles/new',
 ];
 
-function isProtected(pathname: string): boolean {
-  if (pathname === '/') return true; // Root is always protected
-  return protectedRoutes.some(route => pathname.startsWith(route));
+function isProtectedRoute(pathname: string): boolean {
+  if (pathname === '/') return true; 
+  return protectedRoutes.some(route => pathname.startsWith(route) && route !== '/');
 }
 
 export async function middleware(request: NextRequest) {
@@ -41,7 +39,7 @@ export async function middleware(request: NextRequest) {
   }
   
   // If user is not authenticated and tries to access a protected route
-  if (!session && isProtected(pathname) && !publicRoutes.includes(pathname)) {
+  if (!session && isProtectedRoute(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   
@@ -49,6 +47,5 @@ export async function middleware(request: NextRequest) {
 }
  
 export const config = {
-  // Matcher ignoring `_next/` and `api/`
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 }
