@@ -37,8 +37,8 @@ export async function getSession(): Promise<SessionData | null> {
     }
 }
 
-export async function getSessionFromCookie(cookieStore: Readonly<RequestCookie[]>): Promise<SessionData | null> {
-    const cookie = cookieStore.find(c => c.name === cookieName);
+export async function getSessionFromCookie(cookieStore: { get: (name: string) => RequestCookie | undefined }): Promise<SessionData | null> {
+    const cookie = cookieStore.get(cookieName);
      if (!cookie) return null;
 
     try {
