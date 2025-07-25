@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, ExternalLink } from "lucide-react";
+import { Edit, Trash2, ExternalLink, Layers } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -45,7 +45,7 @@ export function MaterialList({ materials }: MaterialListProps) {
   if (!materials || materials.length === 0) {
     return (
       <div className="text-center py-10 text-muted-foreground">
-        <LayersIcon className="mx-auto h-12 w-12 mb-4" />
+        <Layers className="mx-auto h-12 w-12 mb-4" />
         <h3 className="text-xl font-semibold">No hay materiales registrados</h3>
         <p className="mt-2">Empieza agregando tu primer material de impresión.</p>
         <Button asChild className="mt-4">
@@ -124,25 +124,4 @@ export function MaterialList({ materials }: MaterialListProps) {
       </Table>
     </div>
   );
-}
-
-function LayersIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
-    </svg>
-  )
 }
