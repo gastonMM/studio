@@ -13,11 +13,7 @@ La aplicación permite gestionar todos los recursos involucrados en el proceso d
 
 La aplicación está organizada en varias secciones principales, accesibles desde el menú de navegación lateral.
 
-### 2.1. Dashboard (Página de Inicio)
-- **Ruta:** `/`
-- **Función:** Es la página de bienvenida. Ofrece una vista rápida y resumida del estado actual de la aplicación, mostrando tarjetas con estadísticas clave (ej: total de proyectos, materiales registrados). También sirve como punto de partida para que los nuevos usuarios entiendan las capacidades de la herramienta.
-
-### 2.2. Gestión de Materiales
+### 2.1. Gestión de Materiales
 - **Ruta:** `/materials`
 - **Función:** Permite la gestión completa (CRUD - Crear, Leer, Actualizar, Eliminar) de los materiales de impresión.
 - **Campos Clave:**
@@ -27,7 +23,7 @@ La aplicación está organizada en varias secciones principales, accesibles desd
     - `Densidad (g/cm³)` y `Diámetro (mm)`: Parámetros técnicos del material.
 - **Impacto:** Los datos aquí registrados son la base para el **Costo de Material** en cada cálculo.
 
-### 2.3. Gestión de Accesorios
+### 2.2. Gestión de Accesorios
 - **Ruta:** `/accessories`
 - **Función:** Permite la gestión completa (CRUD) de componentes adicionales que no son el material de impresión.
 - **Campos Clave:**
@@ -35,7 +31,7 @@ La aplicación está organizada en varias secciones principales, accesibles desd
     - `Precio del Paquete` y `Unidades por Paquete`: Se usan para calcular automáticamente el `Costo por Unidad`.
 - **Impacto:** Permite añadir un costo adicional y preciso por cada accesorio utilizado en un proyecto.
 
-### 2.4. Perfiles de Impresora
+### 2.3. Perfiles de Impresora
 - **Ruta:** `/printer-profiles`
 - **Función:** Centraliza la configuración de los parámetros relacionados con las impresoras 3D. Actualmente, existe un perfil por defecto.
 - **Campos Clave:**
@@ -46,7 +42,7 @@ La aplicación está organizada en varias secciones principales, accesibles desd
     - `Costo Hora Labor`: Tarifas para el trabajo manual.
 - **Impacto:** Estos datos son cruciales para calcular los costos de **electricidad, amortización, fallas y labor**.
 
-### 2.5. Nueva Calculación
+### 2.4. Nueva Calculación
 - **Ruta:** `/projects/calculate`
 - **Función:** Es el corazón de la aplicación. Un formulario detallado donde el usuario introduce los parámetros de una pieza específica para obtener un desglose completo de costos.
 - **Proceso:**
@@ -56,7 +52,7 @@ La aplicación está organizada en varias secciones principales, accesibles desd
     4. Al presionar "Calcular Costos", la aplicación ejecuta la lógica de cálculo y muestra los resultados en tiempo real.
     5. Si el resultado es satisfactorio, el usuario puede presionar "Guardar Cálculo" para añadir el proyecto al Catálogo.
 
-### 2.6. Catálogo
+### 2.5. Catálogo
 - **Ruta:** `/projects`
 - **Función:** Muestra todos los proyectos que han sido guardados desde la sección "Nueva Calculación". Funciona como un catálogo de productos finalizados.
 - **Características:**
@@ -66,6 +62,7 @@ La aplicación está organizada en varias secciones principales, accesibles desd
     - **Acciones:** Cada tarjeta tiene botones para:
         - **Editar/Recalcular:** Abre el proyecto en el formulario de cálculo para ajustar parámetros.
         - **Eliminar:** Borra el proyecto del catálogo (y de la base de datos).
+        - **Recalcular Todos:** Un botón global que actualiza los costos de todos los proyectos del catálogo con los precios más recientes de materiales, perfiles, etc.
 
 ---
 
@@ -113,9 +110,8 @@ La fórmula de cálculo se ejecuta en el servidor (en `src/lib/calculation.ts`) 
 
 ### 4.1. Tecnologías
 - **Frontend:** Next.js (React), TypeScript, Tailwind CSS, ShadCN (para componentes UI).
-- **Backend:** Next.js API Routes (Serverless Functions).
-- **Base de Datos:** MySQL.
-- **Comunicación con BD:** Paquete `mysql2`.
+- **Backend:** Next.js API Routes (Serverless Functions) y Server Actions.
+- **Base de Datos:** Simulado en memoria (Mock Store). En un proyecto real, sería una base de datos como MySQL o Firestore.
 
 ### 4.2. Flujo de Datos (Ejemplo: Guardar un Material)
 1. **Usuario:** Interactúa con el formulario en la ruta `/materials/new`.
@@ -123,5 +119,44 @@ La fórmula de cálculo se ejecuta en el servidor (en `src/lib/calculation.ts`) 
 3. **Envío:** Al presionar "Guardar", el componente llama a una **Server Action** (`saveMaterialAction`).
 4. **Server Action (`actions.ts`):** Esta función se ejecuta exclusivamente en el servidor. Recibe los datos del formulario.
 5. **Capa de Servicio (`material-service.ts`):** La Server Action invoca a la función `createMaterial` del servicio correspondiente.
-6. **Capa de Base de Datos (`db.ts`):** El servicio utiliza la conexión a la base de datos para ejecutar una consulta `INSERT` en la tabla `materials`.
-7. **Respuesta:** La base de datos responde, el servicio devuelve el nuevo material creado, la Server Action retorna un estado de éxito, y el componente cliente redirige al usuario y muestra una notificación (`toast`).
+6. **Capa de Datos:** El servicio interactúa con el mock store en memoria para crear o actualizar el registro del material.
+7. **Respuesta:** El servicio responde, la Server Action retorna un estado de éxito, y el componente cliente redirige al usuario y muestra una notificación (`toast`).
+
+---
+
+## 5. API Endpoints
+
+### 5.1. Recalcular Todos los Proyectos
+
+- **Ruta:** `/api/recalculate-all`
+- **Método:** `GET`
+- **Función:** Expone la funcionalidad del botón "Recalcular Todos" para que pueda ser invocada a través de una URL. Esto es ideal para la automatización, permitiendo la ejecución remota de la actualización de costos para todos los proyectos del catálogo.
+
+- **Parámetros de Consulta (Query Params):**
+    - `secret` (obligatorio): Una clave secreta para autorizar la ejecución y prevenir el uso no autorizado del endpoint. Para el entorno de desarrollo, el valor por defecto es `SUPER_SECRET_KEY`.
+    - **Ejemplo de URL:** `https://<dominio>/api/recalculate-all?secret=SUPER_SECRET_KEY`
+
+- **Respuesta Exitosa (200 OK):**
+  Un objeto JSON que confirma el éxito de la operación y la cantidad de proyectos actualizados.
+  ```json
+  {
+    "success": true,
+    "message": "Recalculados 5 proyectos exitosamente.",
+    "count": 5
+  }
+  ```
+
+- **Respuestas de Error:**
+    - **401 No Autorizado:** Si el parámetro `secret` es incorrecto o no se proporciona.
+      ```json
+      {
+        "error": "No autorizado."
+      }
+      ```
+    - **500 Error Interno del Servidor:** Si ocurre un problema durante el proceso de recálculo.
+      ```json
+      {
+        "success": false,
+        "error": "Mensaje detallado del error."
+      }
+      ```
