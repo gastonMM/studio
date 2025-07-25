@@ -10,7 +10,6 @@ import {
   Calculator,
   BookOpen,
   Settings,
-  Tags,
   Zap,
   PercentCircle,
 } from "lucide-react";
@@ -39,7 +38,6 @@ const settingsNavItems = [
   { href: "/printer-profiles", label: "Perfiles Impresora", icon: Printer },
   { href: "/electricity-profiles", label: "Electricidad", icon: Zap },
   { href: "/sales-profiles", label: "Perfiles de Venta", icon: PercentCircle },
-  { href: "/tags", label: "Etiquetas", icon: Tags },
 ];
 
 export function SidebarNav() {
