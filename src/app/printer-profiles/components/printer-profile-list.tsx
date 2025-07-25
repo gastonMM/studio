@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { PrinterProfile } from "@/types";
+import type { PrinterProfile, ElectricityProfile } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Printer } from "lucide-react";
 import Link from "next/link";
@@ -19,13 +19,21 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { deletePrinterProfileAction } from "../actions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface PrinterProfileListProps {
   profiles: PrinterProfile[];
+  electricityProfiles: ElectricityProfile[];
 }
 
-export function PrinterProfileList({ profiles }: PrinterProfileListProps) {
+export function PrinterProfileList({ profiles, electricityProfiles }: PrinterProfileListProps) {
   const { toast } = useToast();
+
+  const getElectricityProfileName = (id?: string) => {
+    if (!id) return "N/A";
+    const profile = electricityProfiles.find(p => p.id === id);
+    return profile ? profile.nombrePerfil : id;
+  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -99,14 +107,19 @@ export function PrinterProfileList({ profiles }: PrinterProfileListProps) {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <div><span className="font-semibold">Consumo:</span> {profile.consumoEnergeticoImpresoraWatts}W</div>
-                    <div><span className="font-semibold">Perfil Eléctrico:</span> {profile.electricityProfileId}</div>
-                    <div><span className="font-semibold">Costo Adquisición:</span> ${profile.costoAdquisicionImpresora?.toLocaleString('es-AR')}</div>
-                    <div><span className="font-semibold">Vida Útil:</span> {profile.vidaUtilEstimadaHorasImpresora}h</div>
-                    <div><span className="font-semibold">Tasa Fallas:</span> {profile.porcentajeFallasEstimado}%</div>
-                    <div><span className="font-semibold">Costo Labor Op:</span> ${profile.costoHoraLaborOperativa}/hr</div>
-                    <div><span className="font-semibold">Costo Labor PP:</span> ${profile.costoHoraLaborPostProcesado}/hr</div>
+                <div className="space-y-2 text-sm">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                        <div><span className="font-semibold">Consumo:</span> {profile.consumoEnergeticoImpresoraWatts}W</div>
+                        <div><span className="font-semibold">Costo Adquisición:</span> {profile.costoAdquisicionImpresora?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}</div>
+                        <div><span className="font-semibold">Vida Útil:</span> {profile.vidaUtilEstimadaHorasImpresora}h</div>
+                        <div><span className="font-semibold">Tasa Fallas:</span> {profile.porcentajeFallasEstimado}%</div>
+                        <div><span className="font-semibold">Costo Labor Op:</span> {profile.costoHoraLaborOperativa?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}/hr</div>
+                        <div><span className="font-semibold">Costo Labor PP:</span> {profile.costoHoraLaborPostProcesado?.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}/hr</div>
+                    </div>
+                     <div className="border-t pt-2 flex items-center justify-between">
+                        <span className="font-semibold">Perfil Eléctrico:</span>
+                        <Badge variant="outline">{getElectricityProfileName(profile.electricityProfileId)}</Badge>
+                     </div>
                 </div>
             </CardContent>
         </Card>

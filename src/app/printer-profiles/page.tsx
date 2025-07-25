@@ -1,9 +1,10 @@
+
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
-import { fetchPrinterProfiles } from "./actions";
+import { fetchPrinterProfiles, fetchElectricityProfiles } from "./actions";
 import { PrinterProfileList } from "./components/printer-profile-list";
 
 export const metadata: Metadata = {
@@ -12,7 +13,10 @@ export const metadata: Metadata = {
 };
 
 export default async function PrinterProfilesPage() {
-  const profiles = await fetchPrinterProfiles();
+  const [profiles, electricityProfiles] = await Promise.all([
+    fetchPrinterProfiles(),
+    fetchElectricityProfiles()
+  ]);
 
   return (
     <div className="container mx-auto py-8">
@@ -33,7 +37,7 @@ export default async function PrinterProfilesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PrinterProfileList profiles={profiles} />
+          <PrinterProfileList profiles={profiles} electricityProfiles={electricityProfiles} />
         </CardContent>
       </Card>
     </div>
