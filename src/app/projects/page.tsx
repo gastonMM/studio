@@ -1,5 +1,6 @@
 
 
+
 import { PlusCircle, Tags } from "lucide-react";
 import Link from "next/link";
 import { fetchProjects } from "./actions";
@@ -8,6 +9,7 @@ import { ProjectList } from "./components/project-list";
 import { ProjectFilters } from "./components/project-filters";
 import type { Metadata } from "next";
 import { TagManager } from "./components/tag-manager";
+import { RecalculateAllButton } from "./components/recalculate-all-button";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -46,6 +48,7 @@ export default async function SavedProjectsPage({
         </div>
         <div className="flex gap-2 items-center flex-wrap">
            <ProjectFilters allTags={allTags} />
+           <RecalculateAllButton />
            <TagManager allTags={allTags} />
            <Link href="/projects/calculate" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 shrink-0">
             <PlusCircle className="mr-2 h-4 w-4" /> Nueva Calculación
