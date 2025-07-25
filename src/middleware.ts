@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server'
 import { getSessionFromCookie } from './lib/session';
  
 const protectedRoutes = [
-    '/',
     '/accessories',
     '/materials',
     '/printer-profiles',
@@ -25,8 +24,14 @@ const protectedRoutes = [
 ];
 
 function isProtectedRoute(pathname: string): boolean {
-  if (pathname === '/') return true; 
-  return protectedRoutes.some(route => pathname.startsWith(route) && route !== '/');
+  // Check if the path starts with any of the protected routes.
+  // This handles dynamic routes like /projects/edit/[id]
+  for (const route of protectedRoutes) {
+    if (pathname.startsWith(route)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export async function middleware(request: NextRequest) {
