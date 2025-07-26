@@ -1,5 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider      = "prisma-client-js"
@@ -13,7 +11,7 @@ datasource db {
 
 model Material {
   id                                String   @id @default(cuid())
-  nombreMaterial                    String
+  nombreMaterial                    String   @unique
   costoPorKg                        Float
   pesoSpoolCompradoGramos           Int      @default(1000)
   urlProducto                       String?
@@ -22,19 +20,19 @@ model Material {
   diametro                          Float?
   notasAdicionales                  String?
   fechaUltimaActualizacionCosto     DateTime @default(now()) @updatedAt
-  proyectosUtilizandoEsteMaterial   Project[]
+  projects                          Project[]
 }
 
 model Accessory {
-  id                             String               @id @default(cuid())
-  nombreAccesorio                String               @unique
+  id                             String   @id @default(cuid())
+  nombreAccesorio                String   @unique
   precioPaqueteObtenido          Float
   unidadesPorPaqueteEnLink       Int
   costoPorUnidad                 Float
   urlProducto                    String?
   notasAdicionales               String?
-  fechaUltimaActualizacionCosto  DateTime             @default(now()) @updatedAt
-  proyectos                      AccessoryInProject[]
+  fechaUltimaActualizacionCosto  DateTime @default(now()) @updatedAt
+  projects                       AccessoryInProject[]
 }
 
 model ElectricityProfile {
@@ -47,71 +45,71 @@ model ElectricityProfile {
 }
 
 model PrinterProfile {
-  id                                  String    @id @default(cuid())
-  nombrePerfilImpresora               String    @unique
-  modeloImpresora                     String?
-  consumoEnergeticoImpresoraWatts     Int?
-  costoAdquisicionImpresora           Float?
-  vidaUtilEstimadaHorasImpresora      Int?
-  porcentajeFallasEstimado            Float?
-  costoHoraLaborOperativa             Float?
-  costoHoraLaborPostProcesado         Float?
-  fechaUltimaActualizacionConfig      DateTime  @default(now()) @updatedAt
-  
-  electricityProfileId                String
-  electricityProfile                  ElectricityProfile @relation(fields: [electricityProfileId], references: [id])
-  
-  projects                            Project[]
+  id                                String   @id @default(cuid())
+  nombrePerfilImpresora             String   @unique
+  modeloImpresora                   String?
+  consumoEnergeticoImpresoraWatts   Int?
+  costoAdquisicionImpresora         Float?
+  vidaUtilEstimadaHorasImpresora    Int?
+  porcentajeFallasEstimado          Float?
+  costoHoraLaborOperativa           Float?
+  costoHoraLaborPostProcesado       Float?
+  fechaUltimaActualizacionConfig    DateTime @default(now()) @updatedAt
+  electricityProfileId              String
+  electricityProfile                ElectricityProfile @relation(fields: [electricityProfileId], references: [id])
+  projects                          Project[]
 }
 
 model SalesProfile {
-  id                       String    @id @default(cuid())
-  nombrePerfil             String    @unique
-  margenGananciaDirecta    Float     // Porcentaje, ej: 30 para 30%
-  comisionMercadoLibre     Float     // Porcentaje, ej: 15 para 15%
-  costoFijoMercadoLibre    Float     // Costo fijo en ARS
-  projects                 Project[]
+  id                      String   @id @default(cuid())
+  nombrePerfil            String   @unique
+  margenGananciaDirecta   Float
+  comisionMercadoLibre    Float
+  costoFijoMercadoLibre   Float
+  projects                Project[]
 }
 
 model Project {
   id                                String    @id @default(cuid())
   nombreProyecto                    String
   descripcionProyecto               String?
-  imageUrls                         Json?     @default("[]")
+  imageUrls                         Json[]
   fechaCreacion                     DateTime  @default(now())
   fechaUltimoCalculo                DateTime  @default(now()) @updatedAt
-
+  
   materialUsadoId                   String
-  material                          Material  @relation(fields: [materialUsadoId], references: [id])
-
+  material                          Material @relation(fields: [materialUsadoId], references: [id])
+  
   configuracionImpresoraIdUsada     String
   printerProfile                    PrinterProfile @relation(fields: [configuracionImpresoraIdUsada], references: [id])
 
   perfilVentaIdUsado                String
   salesProfile                      SalesProfile @relation(fields: [perfilVentaIdUsado], references: [id])
-  
+
   inputsOriginales                  Json
   resultadosCalculados              Json?
 
   accesoriosUsadosEnProyecto        AccessoryInProject[]
-  tags                              Tag[]     @relation("ProjectTags")
+  tags                              Tag[] @relation("ProjectTags")
 }
 
 model AccessoryInProject {
-  id                                 String   @id @default(cuid())
-  cantidadUsadaPorPieza              Int
-  costoUnitarioAlMomentoDelCalculo   Float?
+  id                                String   @id @default(cuid())
+  cantidadUsadaPorPieza             Int
+  costoUnitarioAlMomentoDelCalculo  Float?
   
-  projectId                          String
-  project                            Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId                         String
+  project                           Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
-  accesorioId                        String
-  accessory                          Accessory @relation(fields: [accesorioId], references: [id], onDelete: Cascade)
+  accesorioId                       String
+  accessory                         Accessory @relation(fields: [accesorioId], references: [id])
+
+  @@unique([projectId, accesorioId])
 }
 
 model Tag {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  color    String
-  projects Project[] @relation("ProjectTags")
+  id        String    @id @default(cuid())
+  name      String    @unique
+  color     String
+  projects  Project[] @relation("ProjectTags")
 }
