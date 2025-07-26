@@ -1,57 +1,149 @@
-
-
+import prisma from "@/lib/db";
 import type { Project } from "@/types";
+import { Prisma } from '@prisma/client'
 
-let projects: Project[] = [];
-let nextId = 1;
+// Helper type to define Project with its relations
+const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
+  include: { tags: true, accesoriosUsadosEnProyecto: { include: { accessory: true } } },
+});
+export type ProjectWithRelations = Prisma.ProjectGetPayload<typeof projectWithRelations>;
 
-export async function getProjects(): Promise<Project[]> {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  return projects.sort((a,b) => b.fechaCreacion.getTime() - a.fechaCreacion.getTime());
+
+export async function getProjects(): Promise<ProjectWithRelations[]> {
+  const projects = await prisma.project.findMany({
+    orderBy: {
+      fechaCreacion: 'desc'
+    },
+    include: {
+      tags: true,
+      accesoriosUsadosEnProyecto: {
+        include: {
+          accessory: true,
+        }
+      }
+    }
+  });
+
+  return projects.map(p => ({
+    ...p,
+    imageUrls: p.imageUrls as string[],
+    tags: p.tags.map(t => t.name),
+    inputsOriginales: p.inputsOriginales as any,
+    resultadosCalculados: p.resultadosCalculados as any,
+    accesoriosUsadosEnProyecto: p.accesoriosUsadosEnProyecto.map(aip => ({
+      ...aip.accessory,
+      ...aip
+    })),
+  }));
 }
 
-export async function getProjectById(id: string): Promise<Project | undefined> {
-  await new Promise(resolve => setTimeout(resolve, 100));
-  return projects.find(p => p.id === id);
+export async function getProjectById(id: string): Promise<ProjectWithRelations | null> {
+  const p = await prisma.project.findUnique({
+    where: { id },
+    include: {
+      tags: true,
+      accesoriosUsadosEnProyecto: {
+        include: {
+          accessory: true,
+        }
+      }
+    }
+  });
+  if (!p) return null;
+
+  return {
+    ...p,
+    imageUrls: p.imageUrls as string[],
+    tags: p.tags.map(t => t.name),
+    inputsOriginales: p.inputsOriginales as any,
+    resultadosCalculados: p.resultadosCalculados as any,
+    accesoriosUsadosEnProyecto: p.accesoriosUsadosEnProyecto.map(aip => ({
+      ...aip.accessory,
+      ...aip,
+    })),
+  };
 }
+
+// Type for creating/updating project
+type ProjectData = Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo'>
 
 export async function createProject(
-  projectData: Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo'>
+  projectData: ProjectData
 ): Promise<Project> {
-  if (!projectData.nombreProyecto) {
-    throw new Error("El nombre del proyecto es obligatorio.");
-  }
+  const { tags, accesoriosUsadosEnProyecto, ...rest } = projectData;
 
-  const now = new Date();
-  const newProject: Project = {
-    id: `proj${nextId++}`,
-    ...projectData,
-    tags: projectData.tags || [],
-    fechaCreacion: now,
-    fechaUltimoCalculo: now,
-  };
-  projects.push(newProject);
-  return newProject;
+  return prisma.project.create({
+    data: {
+      ...rest,
+      imageUrls: projectData.imageUrls as Prisma.JsonArray,
+      inputsOriginales: projectData.inputsOriginales as Prisma.JsonObject,
+      resultadosCalculados: (projectData.resultadosCalculados as Prisma.JsonObject) ?? Prisma.JsonNull,
+      tags: {
+        connect: tags?.map(tagName => ({ name: tagName })) ?? []
+      },
+      accesoriosUsadosEnProyecto: {
+        create: accesoriosUsadosEnProyecto?.map(acc => ({
+          cantidadUsadaPorPieza: acc.cantidadUsadaPorPieza,
+          costoUnitarioAlMomentoDelCalculo: acc.costoUnitarioAlMomentoDelCalculo,
+          accesorioId: acc.accesorioId
+        })) ?? []
+      }
+    }
+  });
 }
 
-export async function updateProject(id: string, projectData: Partial<Project>): Promise<Project | null> {
-  const index = projects.findIndex(p => p.id === id);
-  if (index === -1) {
-    return null;
+export async function updateProject(id: string, projectData: Partial<ProjectData>): Promise<Project | null> {
+  const { tags, accesoriosUsadosEnProyecto, ...rest } = projectData;
+  
+  const updateData: Prisma.ProjectUpdateInput = {
+    ...rest
+  };
+  
+  if (rest.imageUrls) {
+      updateData.imageUrls = rest.imageUrls as Prisma.JsonArray;
+  }
+  if (rest.inputsOriginales) {
+      updateData.inputsOriginales = rest.inputsOriginales as Prisma.JsonObject;
+  }
+   if (rest.resultadosCalculados) {
+      updateData.resultadosCalculados = rest.resultadosCalculados as Prisma.JsonObject;
   }
   
-  const updatedProject = {
-    ...projects[index],
-    ...projectData,
-    fechaUltimoCalculo: new Date(),
-  };
+  if (tags) {
+    updateData.tags = {
+      set: tags.map(tagName => ({ name: tagName }))
+    }
+  }
 
-  projects[index] = updatedProject;
-  return updatedProject;
+  const tx = await prisma.$transaction(async (prisma) => {
+    if (accesoriosUsadosEnProyecto) {
+      await prisma.accessoryInProject.deleteMany({ where: { projectId: id }});
+      await prisma.accessoryInProject.createMany({
+        data: accesoriosUsadosEnProyecto.map(acc => ({
+            projectId: id,
+            accesorioId: acc.accesorioId,
+            cantidadUsadaPorPieza: acc.cantidadUsadaPorPieza,
+            costoUnitarioAlMomentoDelCalculo: acc.costoUnitarioAlMomentoDelCalculo,
+        }))
+      });
+    }
+
+    return prisma.project.update({
+      where: { id },
+      data: updateData
+    })
+  })
+
+  return tx;
 }
 
+
 export async function deleteProject(id: string): Promise<boolean> {
-  const initialLength = projects.length;
-  projects = projects.filter(p => p.id !== id);
-  return projects.length < initialLength;
+  try {
+    await prisma.project.delete({ where: { id } });
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 }

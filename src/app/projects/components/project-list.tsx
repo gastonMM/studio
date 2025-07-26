@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Project, Tag } from "@/types";
@@ -80,7 +81,7 @@ export function ProjectList({ projects, allTags }: ProjectListProps) {
           <CardHeader className="p-0">
              <Carousel className="w-full rounded-t-lg overflow-hidden">
               <CarouselContent>
-                {project.imageUrls && project.imageUrls.length > 0 ? (
+                {project.imageUrls && Array.isArray(project.imageUrls) && project.imageUrls.length > 0 ? (
                   project.imageUrls.map((url, index) => (
                     <CarouselItem key={index}>
                       <div className="aspect-[4/3] relative">
@@ -108,7 +109,7 @@ export function ProjectList({ projects, allTags }: ProjectListProps) {
                   </CarouselItem>
                 )}
               </CarouselContent>
-              {project.imageUrls && project.imageUrls.length > 1 && (
+              {project.imageUrls && Array.isArray(project.imageUrls) && project.imageUrls.length > 1 && (
                 <>
                   <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
                   <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />

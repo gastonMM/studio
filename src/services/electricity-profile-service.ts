@@ -1,26 +1,18 @@
-
+import prisma from "@/lib/db";
 import type { ElectricityProfile, ElectricityProfileFormData } from "@/types";
 
-let profiles: ElectricityProfile[] = [
-    { 
-        id: "ep1", 
-        nombrePerfil: "Tarifa General", 
-        consumoMensualKWh: 150,
-        costoTotalFactura: 6825,
-        costoPorKWh: 45.5,
-    }
-];
-
-let nextId = 2;
-
 export async function getElectricityProfiles(): Promise<ElectricityProfile[]> {
-  await new Promise(resolve => setTimeout(resolve, 50));
-  return profiles.sort((a, b) => a.nombrePerfil.localeCompare(b.nombrePerfil));
+  return prisma.electricityProfile.findMany({
+    orderBy: {
+      nombrePerfil: 'asc'
+    }
+  });
 }
 
-export async function getElectricityProfileById(id: string): Promise<ElectricityProfile | undefined> {
-  await new Promise(resolve => setTimeout(resolve, 50));
-  return profiles.find(p => p.id === id);
+export async function getElectricityProfileById(id: string): Promise<ElectricityProfile | null> {
+  return prisma.electricityProfile.findUnique({
+    where: { id },
+  });
 }
 
 export async function createElectricityProfile(formData: ElectricityProfileFormData): Promise<ElectricityProfile> {
@@ -29,35 +21,47 @@ export async function createElectricityProfile(formData: ElectricityProfileFormD
     }
     const costoPorKWh = formData.costoTotalFactura / formData.consumoMensualKWh;
     
-    const newProfile: ElectricityProfile = {
-        id: `ep${nextId++}`,
-        costoPorKWh,
-        ...formData,
-    };
-    
-    profiles.push(newProfile);
-    return newProfile;
+    return prisma.electricityProfile.create({
+        data: {
+            ...formData,
+            costoPorKWh,
+        }
+    });
 }
 
 export async function updateElectricityProfile(id: string, formData: Partial<ElectricityProfileFormData>): Promise<ElectricityProfile | null> {
-    const index = profiles.findIndex(p => p.id === id);
-    if (index === -1) {
-        return null;
-    }
-    
-    const updatedProfile = { ...profiles[index], ...formData };
+    const dataToUpdate: Partial<ElectricityProfile> = { ...formData };
 
     if (formData.costoTotalFactura !== undefined || formData.consumoMensualKWh !== undefined) {
-        updatedProfile.costoPorKWh = updatedProfile.costoTotalFactura / updatedProfile.consumoMensualKWh;
+      const currentProfile = await getElectricityProfileById(id);
+      if (!currentProfile) throw new Error("Profile not found");
+      const cost = formData.costoTotalFactura ?? currentProfile.costoTotalFactura;
+      const consumption = formData.consumoMensualKWh ?? currentProfile.consumoMensualKWh;
+      if (consumption > 0) {
+        dataToUpdate.costoPorKWh = cost / consumption;
+      }
     }
     
-    profiles[index] = updatedProfile;
-    return updatedProfile;
+    return prisma.electricityProfile.update({
+        where: { id },
+        data: dataToUpdate,
+    });
 }
 
 export async function deleteElectricityProfile(id: string): Promise<boolean> {
-    const initialLength = profiles.length;
-    // You might want to check if this profile is being used by any printer profile before deleting
-    profiles = profiles.filter(p => p.id !== id);
-    return profiles.length < initialLength;
+  // Check if profile is used by any printer profile
+  const count = await prisma.printerProfile.count({
+    where: { electricityProfileId: id }
+  });
+  if (count > 0) {
+    throw new Error("No se puede eliminar: el perfil está en uso por uno o más perfiles de impresora.");
+  }
+  
+  try {
+    await prisma.electricityProfile.delete({ where: { id } });
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 }

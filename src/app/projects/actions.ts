@@ -2,7 +2,7 @@
 
 "use server";
 
-import type { Project } from "@/types";
+import type { Project, ProjectFormDataForSumbit as ProjectData } from "@/types";
 import { revalidatePath } from "next/cache";
 import { getProjects, getProjectById, createProject, updateProject, deleteProject } from "@/services/project-service";
 import { getMaterials } from "@/services/material-service";
@@ -17,23 +17,15 @@ export async function fetchProjects(): Promise<Project[]> {
 }
 
 export async function fetchProjectById(id: string): Promise<Project | undefined> {
-  return getProjectById(id);
+  const project = await getProjectById(id);
+  // The service returns a hydrated project, so we can cast it
+  return project as Project | undefined;
 }
 
-export async function saveProjectAction(projectData: Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo'> & { id?: string }) {
+export async function saveProjectAction(projectData: ProjectData) {
   try {
     if (projectData.id) {
-      // For updates, we expect a full ProjectFormData object usually, but here we adapt
-      const existingProject = await getProjectById(projectData.id);
-      if (!existingProject) throw new Error("Proyecto no encontrado para actualizar.");
-      
-      const projectToUpdate: Project = {
-        ...existingProject,
-        ...projectData,
-        fechaUltimoCalculo: new Date(),
-      };
-      await updateProject(projectData.id, projectToUpdate);
-
+      await updateProject(projectData.id, projectData);
     } else {
       await createProject(projectData);
     }
@@ -42,6 +34,7 @@ export async function saveProjectAction(projectData: Omit<Project, 'id' | 'fecha
     
     return { success: true };
   } catch (error) {
+    console.error(error);
     const errorMessage = error instanceof Error ? error.message : "Ocurrió un error desconocido.";
     return { success: false, error: errorMessage };
   }
@@ -87,11 +80,11 @@ export async function recalculateAllProjectsAction() {
             );
 
             if (results) {
-                await updateProject(project.id, {
-                    ...project,
-                    resultadosCalculados: results,
-                    fechaUltimoCalculo: new Date()
-                });
+                const projectDataToUpdate = {
+                  ...project,
+                  resultadosCalculados: results,
+                }
+                await updateProject(project.id, projectDataToUpdate as any);
             } else {
                 console.warn(`Could not recalculate project ${project.id} (${project.nombreProyecto}). Skipping.`);
             }
@@ -99,6 +92,7 @@ export async function recalculateAllProjectsAction() {
         revalidatePath('/projects');
         return { success: true, count: projects.length };
     } catch (error) {
+        console.error(error);
         const errorMessage = error instanceof Error ? error.message : "Ocurrió un error desconocido.";
         return { success: false, error: errorMessage };
     }

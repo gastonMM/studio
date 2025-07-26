@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { ProjectFormData, Material, Accessory, PrinterProfile, Project, Tag, ElectricityProfile, SalesProfile } from "@/types";
+import type { Material, Accessory, PrinterProfile, Project, Tag, ElectricityProfile, SalesProfile, ProjectFormDataForSumbit } from "@/types";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -122,6 +122,12 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
     resolver: zodResolver(projectSchema),
     defaultValues: projectToEdit ? {
         ...projectToEdit,
+        imageUrls: projectToEdit.imageUrls as string[],
+        tags: projectToEdit.tags as string[],
+        accesoriosUsadosEnProyecto: projectToEdit.accesoriosUsadosEnProyecto.map(a => ({
+          accesorioId: a.accesorioId,
+          cantidadUsadaPorPieza: a.cantidadUsadaPorPieza,
+        })),
         inputsOriginales: {
             ...projectToEdit.inputsOriginales,
             tiempoImpresionHoras: hoursToHhmm(projectToEdit.inputsOriginales.tiempoImpresionHoras),
@@ -168,7 +174,7 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
     name: "imageUrls"
   });
 
-  const imageUrls = form.watch("imageUrls");
+  const imageUrls = form.watch("imageUrls") ?? [];
   const tags = form.watch("tags") || [];
   
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -317,11 +323,11 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
     }
 
 
-    const projectToSave: Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo'> & { id?: string } = {
+    const projectToSave: ProjectFormDataForSumbit = {
       id: projectToEdit?.id,
       ...values,
-      imageUrls: values.imageUrls,
-      tags: values.tags,
+      imageUrls: values.imageUrls || [],
+      tags: values.tags || [],
       inputsOriginales: {
         ...values.inputsOriginales,
         tiempoImpresionHoras: hhmmToHours(values.inputsOriginales.tiempoImpresionHoras),

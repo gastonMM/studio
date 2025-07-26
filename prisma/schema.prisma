@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Material {
+  id                            String    @id @default(cuid())
+  nombreMaterial                String
+  costoPorKg                    Float
+  pesoSpoolCompradoGramos       Int       @default(1000)
+  urlProducto                   String?
+  selectorPrecioCSS             String?
+  densidad                      Float?
+  diametro                      Float?
+  fechaUltimaActualizacionCosto DateTime  @default(now())
+  notasAdicionales              String?
+  projects                      Project[]
+}
+
+model Accessory {
+  id                            String              @id @default(cuid())
+  nombreAccesorio               String
+  costoPorUnidad                Float
+  urlProducto                   String?
+  unidadesPorPaqueteEnLink      Int                 @default(1)
+  precioPaqueteObtenido         Float
+  selectorPrecioCSS             String?
+  fechaUltimaActualizacionCosto DateTime            @default(now())
+  notasAdicionales              String?
+  projects                      AccessoryInProject[]
+}
+
+model ElectricityProfile {
+  id                  String           @id @default(cuid())
+  nombrePerfil        String
+  consumoMensualKWh   Float
+  costoTotalFactura   Float
+  costoPorKWh         Float
+  printerProfiles     PrinterProfile[]
+}
+
+model PrinterProfile {
+  id                                String    @id @default(cuid())
+  nombrePerfilImpresora             String
+  modeloImpresora                   String?
+  consumoEnergeticoImpresoraWatts   Int?
+  electricityProfileId              String
+  costoAdquisicionImpresora         Float?
+  vidaUtilEstimadaHorasImpresora    Int?
+  tasaAmortizacionImpresoraPorHoraUso Float?
+  porcentajeFallasEstimado          Float?
+  costoHoraLaborOperativa           Float?
+  costoHoraLaborPostProcesado       Float?
+  fechaUltimaActualizacionConfig    DateTime  @default(now())
+  projects                          Project[]
+
+  electricityProfile ElectricityProfile @relation(fields: [electricityProfileId], references: [id], onDelete: Restrict)
+}
+
+model SalesProfile {
+  id                     String    @id @default(cuid())
+  nombrePerfil           String
+  margenGananciaDirecta  Float
+  comisionMercadoLibre   Float
+  costoFijoMercadoLibre  Float
+  projects               Project[]
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  color     String
+  projects  Project[] @relation("ProjectTags")
+}
+
+model Project {
+  id                            String              @id @default(cuid())
+  nombreProyecto                String
+  descripcionProyecto           String?
+  imageUrls                     Json
+  tags                          Tag[]               @relation("ProjectTags")
+  fechaCreacion                 DateTime            @default(now())
+  fechaUltimoCalculo            DateTime            @updatedAt
+  materialUsadoId               String
+  configuracionImpresoraIdUsada String
+  perfilVentaIdUsado            String
+  accesoriosUsadosEnProyecto    AccessoryInProject[]
+  inputsOriginales              Json
+  resultadosCalculados          Json?
+  notasProyecto                 String?
+
+  material         Material       @relation(fields: [materialUsadoId], references: [id], onDelete: Restrict)
+  printerProfile   PrinterProfile @relation(fields: [configuracionImpresoraIdUsada], references: [id], onDelete: Restrict)
+  salesProfile     SalesProfile   @relation(fields: [perfilVentaIdUsado], references: [id], onDelete: Restrict)
+}
+
+model AccessoryInProject {
+  id                                String  @id @default(cuid())
+  projectId                         String
+  accesorioId                       String
+  cantidadUsadaPorPieza             Int
+  costoUnitarioAlMomentoDelCalculo  Float?
+
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  accessory Accessory @relation(fields: [accesorioId], references: [id], onDelete: Restrict)
+
+  @@unique([projectId, accesorioId])
+}
