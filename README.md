@@ -25,13 +25,15 @@ Es la pantalla principal y el centro de operaciones. Muestra todos los proyectos
     - **Eliminar:** Borra el proyecto del catálogo.
 - **Acciones Globales:**
     - **Recalcular Todos:** Un botón que actualiza los costos de *todos* los proyectos con los precios más recientes de materiales, perfiles, etc.
-    - **Administrar Etiquetas:** Abre un gestor para crear, editar y eliminar las etiquetas usadas en los proyectos.
+    - **Administrar Etiquetas:** Abre un gestor para crear, editar (nombre y color) y eliminar las etiquetas usadas en los proyectos. Las etiquetas pueden ser creadas directamente desde este gestor o al añadirlas a un nuevo proyecto.
     - **Nueva Calculación:** Acceso directo para crear un nuevo proyecto.
 
 ### 2.2. Nueva Calculación (`/projects/calculate`)
 El corazón de la aplicación. Un formulario detallado para introducir los parámetros de una pieza y obtener un desglose completo de costos.
 
 - **Datos del Proyecto:** Nombre, descripción, imágenes y etiquetas.
+    - **Imágenes:** Permite subir múltiples imágenes. **Importante:** Todas las imágenes se convierten automáticamente a formato PNG y se redimensionan a un máximo de 1024px para optimizar la carga y consistencia visual.
+    - **Etiquetas:** Permite asignar etiquetas existentes o crear nuevas sobre la marcha.
 - **Parámetros de Impresión:**
     - Selección de **Material** y **Perfil de Impresora**.
     - Peso de la pieza y tiempo de impresión.
