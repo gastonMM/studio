@@ -51,6 +51,8 @@ La aplicación está organizada en varias secciones principales, accesibles desd
     3. Opcionalmente, añade los accesorios utilizados.
     4. Al presionar "Calcular Costos", la aplicación ejecuta la lógica de cálculo y muestra los resultados en tiempo real.
     5. Si el resultado es satisfactorio, el usuario puede presionar "Guardar Cálculo" para añadir el proyecto al Catálogo.
+- **Imágenes del Proyecto**: Permite subir múltiples imágenes que se convierten a formato PNG y se redimensionan a un máximo de 1024px.
+- **Etiquetas**: Permite asignar etiquetas existentes o crear nuevas sobre la marcha para organizar los proyectos.
 
 ### 2.5. Catálogo
 - **Ruta:** `/projects`
@@ -58,11 +60,16 @@ La aplicación está organizada en varias secciones principales, accesibles desd
 - **Características:**
     - **Vista de Tarjetas:** Cada proyecto se muestra en una tarjeta visualmente atractiva.
     - **Carrusel de Imágenes:** Si un proyecto tiene múltiples imágenes, se muestran en un carrusel interactivo con botones de navegación (flechas a izquierda y derecha) que permiten al usuario desplazarse entre ellas.
-    - **Información Rápida:** Se muestra el nombre, costo total y precio de venta sugerido.
-    - **Acciones:** Cada tarjeta tiene botones para:
+    - **Información Rápida:** Se muestra el nombre, costo total y precios de venta sugeridos para cada canal (Directa, ML).
+    - **Descripción**: Muestra una descripción corta del proyecto si fue proporcionada.
+    - **Etiquetas**: Muestra las etiquetas asociadas al proyecto con sus respectivos colores.
+    - **Acciones por Tarjeta:**
         - **Editar/Recalcular:** Abre el proyecto en el formulario de cálculo para ajustar parámetros.
-        - **Eliminar:** Borra el proyecto del catálogo (y de la base de datos).
+        - **Eliminar:** Borra el proyecto del catálogo.
+    - **Acciones Globales:**
         - **Recalcular Todos:** Un botón global que actualiza los costos de todos los proyectos del catálogo con los precios más recientes de materiales, perfiles, etc.
+        - **Administrar Etiquetas:** Abre un diálogo para gestionar todas las etiquetas. Permite crear, editar (nombre y color) y eliminar etiquetas.
+        - **Filtros:** Permite buscar proyectos por nombre y/o filtrar por una o más etiquetas.
 
 ---
 
@@ -109,18 +116,46 @@ La fórmula de cálculo se ejecuta en el servidor (en `src/lib/calculation.ts`) 
 ## 4. Arquitectura y Flujo de Datos
 
 ### 4.1. Tecnologías
-- **Frontend:** Next.js (React), TypeScript, Tailwind CSS, ShadCN (para componentes UI).
-- **Backend:** Next.js API Routes (Serverless Functions) y Server Actions.
-- **Base de Datos:** Simulado en memoria (Mock Store). En un proyecto real, sería una base de datos como MySQL o Firestore.
+- **Frontend:**
+    - **Framework:** Next.js 14+ con App Router.
+    - **Lenguaje:** TypeScript.
+    - **UI y Estilos:**
+        - **Tailwind CSS:** Para un enfoque "utility-first" en los estilos.
+        - **ShadCN:** Para un conjunto de componentes UI reutilizables y accesibles, construidos sobre Radix UI. La configuración del tema se encuentra en `src/app/globals.css`.
+    - **Gestión de Formularios:** Se utiliza `React Hook Form` para la gestión de formularios complejos, junto con `Zod` para la validación de esquemas tanto en el cliente como en el servidor.
+
+- **Backend:**
+    - **Lógica de Servidor:** Se emplean **Next.js Server Actions** para todas las operaciones de mutación de datos (Crear, Actualizar, Eliminar). Esto permite llamar a funciones del servidor directamente desde los componentes de cliente, simplificando la arquitectura al no necesitar una capa de API tradicional.
+
+- **Capa de Datos:**
+    - **Almacenamiento en Memoria (`mock store`)**: Para facilitar el desarrollo y evitar dependencias de bases de datos externas, la aplicación utiliza un "mock store" que se encuentra en `src/services/mock-store.ts`.
+    - **Importante**: Este enfoque implica que **todos los datos se reinician cada vez que el servidor de desarrollo se recarga**. Es ideal para prototipado y desarrollo, pero debería ser reemplazado por una base de datos persistente (como Firestore, Supabase o una base de datos SQL) para un entorno de producción.
 
 ### 4.2. Flujo de Datos (Ejemplo: Guardar un Material)
-1. **Usuario:** Interactúa con el formulario en la ruta `/materials/new`.
-2. **Componente Cliente (React):** El formulario (`MaterialForm.tsx`) gestiona el estado y la validación de los campos.
-3. **Envío:** Al presionar "Guardar", el componente llama a una **Server Action** (`saveMaterialAction`).
-4. **Server Action (`actions.ts`):** Esta función se ejecuta exclusivamente en el servidor. Recibe los datos del formulario.
-5. **Capa de Servicio (`material-service.ts`):** La Server Action invoca a la función `createMaterial` del servicio correspondiente.
-6. **Capa de Datos:** El servicio interactúa con el mock store en memoria para crear o actualizar el registro del material.
-7. **Respuesta:** El servicio responde, la Server Action retorna un estado de éxito, y el componente cliente redirige al usuario y muestra una notificación (`toast`).
+El siguiente diagrama ilustra el flujo de datos desde la interacción del usuario hasta el guardado de la información:
+
+1.  **Usuario (Cliente)**: El usuario interactúa con el formulario en la ruta `/materials/new`.
+2.  **Componente React (`MaterialForm.tsx`)**:
+    *   Este es un **Componente de Cliente** (`"use client"`).
+    *   Utiliza `React Hook Form` para gestionar el estado del formulario, las entradas del usuario y la validación en tiempo real.
+    *   `Zod` define el esquema de validación que se comparte entre cliente y servidor.
+3.  **Envío del Formulario**:
+    *   Al presionar "Guardar", el evento `onSubmit` del formulario se activa.
+    *   El componente llama a la **Server Action** `saveMaterialAction`, pasándole los datos del formulario ya validados por Zod.
+4.  **Server Action (`/materials/actions.ts`)**:
+    *   Esta función, marcada con `"use server"`, se ejecuta **exclusivamente en el servidor**.
+    *   Recibe los datos del formulario y actúa como un controlador.
+5.  **Capa de Servicio (`/services/material-service.ts`)**:
+    *   La Server Action invoca a la función `createMaterial` del servicio correspondiente.
+    *   Esta capa de abstracción contiene la lógica de negocio principal. Por ejemplo, podría realizar validaciones adicionales o transformar los datos antes de guardarlos.
+6.  **Capa de Datos (`/services/mock-store.ts`)**:
+    *   El servicio interactúa con la instancia del `mockStore` para crear un nuevo registro de material en el mapa de memoria.
+7.  **Respuesta y Actualización de UI**:
+    *   La Server Action retorna un objeto indicando el resultado (`{ success: true }` o `{ success: false, error: '...' }`).
+    *   El componente cliente (`MaterialForm.tsx`) recibe esta respuesta de forma asíncrona.
+    *   Si la operación fue exitosa, utiliza el `router` de `next/navigation` para redirigir al usuario (ej: de vuelta a `/materials`) y muestra una notificación de éxito (`toast`).
+    *   Si hubo un error, muestra un `toast` con el mensaje de error devuelto por el servidor.
+    *   Se llama a `revalidatePath` en la Server Action para que Next.js invalide la caché y obtenga los datos actualizados en la página de listado.
 
 ---
 
@@ -130,7 +165,7 @@ La fórmula de cálculo se ejecuta en el servidor (en `src/lib/calculation.ts`) 
 
 - **Ruta:** `/api/recalculate-all`
 - **Método:** `GET`
-- **Función:** Expone la funcionalidad del botón "Recalcular Todos" para que pueda ser invocada a través de una URL. Esto es ideal para la automatización, permitiendo la ejecución remota de la actualización de costos para todos los proyectos del catálogo.
+- **Función:** Expone la funcionalidad del botón "Recalcular Todos" para que pueda ser invocada a través de una URL. Esto es ideal para la automatización (por ejemplo, con un `cron job`) para mantener los precios de todos los proyectos actualizados.
 
 - **Parámetros de Consulta (Query Params):**
     - `secret` (obligatorio): Una clave secreta para autorizar la ejecución y prevenir el uso no autorizado del endpoint. Para el entorno de desarrollo, el valor por defecto es `SUPER_SECRET_KEY`.
