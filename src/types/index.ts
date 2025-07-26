@@ -1,37 +1,75 @@
-import type { 
-    Material as PrismaMaterial,
-    Accessory as PrismaAccessory,
-    ElectricityProfile as PrismaElectricityProfile,
-    PrinterProfile as PrismaPrinterProfile,
-    SalesProfile as PrismaSalesProfile,
-    Tag as PrismaTag,
-    Project as PrismaProject,
-    AccessoryInProject as PrismaAccessoryInProject
-} from '@prisma/client';
-import type { ProjectWithRelations } from '@/services/project-service';
+// Base types for form data, matching the old schema structure
+export type MaterialFormData = { id?: string, nombreMaterial: string, costoPorKg: number, pesoSpoolCompradoGramos?: number, urlProducto?: string, selectorPrecioCSS?: string, densidad?: number, diametro?: number, notasAdicionales?: string };
+export type AccessoryFormData = { id?: string, nombreAccesorio: string, precioPaqueteObtenido: number, unidadesPorPaqueteEnLink: number, urlProducto?: string, notasAdicionales?: string };
+export type ElectricityProfileFormData = { id?: string, nombrePerfil: string, consumoMensualKWh: number, costoTotalFactura: number };
+export type PrinterProfileFormData = { id?: string, nombrePerfilImpresora: string, modeloImpresora?: string, consumoEnergeticoImpresoraWatts?: number, electricityProfileId: string, costoAdquisicionImpresora?: number, vidaUtilEstimadaHorasImpresora?: number, porcentajeFallasEstimado?: number, costoHoraLaborOperativa?: number, costoHoraLaborPostProcesado?: number };
+export type SalesProfileFormData = { id?: string, nombrePerfil: string, margenGananciaDirecta: number, comisionMercadoLibre: number, costoFijoMercadoLibre: number };
+export type TagFormData = { id?: string, name: string, color: string };
 
-// Re-export Prisma types to be used throughout the application
-export type Material = PrismaMaterial;
-export type Accessory = PrismaAccessory;
-export type ElectricityProfile = PrismaElectricityProfile;
-export type PrinterProfile = PrismaPrinterProfile;
-export type SalesProfile = PrismaSalesProfile;
-export type Tag = PrismaTag;
-export type Project = ProjectWithRelations; // Use the hydrated type for client components
-export type AccessoryInProject = PrismaAccessoryInProject & { nombreAccesorio?: string };
+// Data types as stored in the mock store (similar to DB models)
+export type Material = MaterialFormData & { id: string, fechaUltimaActualizacionCosto: Date };
+export type Accessory = AccessoryFormData & { id: string, fechaUltimaActualizacionCosto: Date, costoPorUnidad: number };
+export type ElectricityProfile = ElectricityProfileFormData & { id: string, costoPorKWh: number };
+export type PrinterProfile = PrinterProfileFormData & { id: string, fechaUltimaActualizacionConfig: Date, tasaAmortizacionImpresoraPorHoraUso?: number };
+export type SalesProfile = SalesProfileFormData & { id: string };
+export type Tag = TagFormData & { id: string };
 
-// Form data types
-// For react-hook-form, partial types are often useful
-export type MaterialFormData = Omit<Material, 'id' | 'fechaUltimaActualizacionCosto'> & { id?: string };
-export type AccessoryFormData = Omit<Accessory, 'id' | 'fechaUltimaActualizacionCosto' | 'costoPorUnidad'> & { id?: string };
-export type ElectricityProfileFormData = Omit<ElectricityProfile, 'id' | 'costoPorKWh'> & { id?: string };
-export type PrinterProfileFormData = Omit<PrinterProfile, 'id' | 'fechaUltimaActualizacionConfig' | 'tasaAmortizacionImpresoraPorHoraUso'> & { id?: string };
-export type SalesProfileFormData = Omit<SalesProfile, 'id'> & { id?: string };
-export type TagFormData = Omit<Tag, 'id'>;
+export type AccessoryInProject = {
+    id: string; // This would be the ID of the accessory itself
+    projectId: string;
+    accesorioId: string;
+    cantidadUsadaPorPieza: number;
+    costoUnitarioAlMomentoDelCalculo: number;
+    // Include accessory details for easy access
+    nombreAccesorio: string;
+    costoPorUnidad: number;
+};
 
-// Project form data is more complex due to relations and JSON fields
-// This is a representation of the data collected by the form before it's processed for the DB
-export type ProjectFormDataForSumbit = Omit<PrismaProject, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo' | 'tags' | 'imageUrls' | 'inputsOriginales' | 'resultadosCalculados' | 'accesoriosUsadosEnProyecto'> & {
+export type Project = {
+    id: string;
+    nombreProyecto: string;
+    descripcionProyecto?: string;
+    imageUrls: string[];
+    tags: string[];
+    materialUsadoId: string;
+    configuracionImpresoraIdUsada: string;
+    perfilVentaIdUsado: string;
+    inputsOriginales: {
+        pesoPiezaGramos: number;
+        tiempoImpresionHoras: number;
+        tiempoLaborOperativaHoras?: number;
+        tiempoPostProcesadoHoras?: number;
+        cantidadPiezasLote: number;
+    };
+    accesoriosUsadosEnProyecto: AccessoryInProject[];
+    resultadosCalculados?: {
+        costoMaterialPieza: number;
+        costoElectricidadPieza: number;
+        costoAmortizacionPieza: number;
+        costoLaborOperativaPieza: number;
+        costoLaborPostProcesadoPieza: number;
+        costoTotalAccesoriosPieza: number;
+        subTotalCostoDirectoPieza: number;
+        costoContingenciaFallasPieza: number;
+        costoTotalPieza: number;
+        costoTotalLote: number;
+        precioVentaDirecta?: number;
+        precioVentaMercadoLibre?: number;
+    };
+    fechaCreacion: Date;
+    fechaUltimoCalculo: Date;
+};
+
+
+// A hydrated project type that includes the full objects for related items.
+// This is useful for client-side components.
+export type ProjectWithRelations = Project & {
+    // In the mock store, relations will be handled by the getProjectById/getProjects functions
+};
+
+
+// This is a representation of the data collected by the form before it's processed for the DB/store
+export type ProjectFormDataForSumbit = Omit<Project, 'id' | 'fechaCreacion' | 'fechaUltimoCalculo' | 'tags' | 'imageUrls' | 'inputsOriginales' | 'resultadosCalculados' | 'accesoriosUsadosEnProyecto'> & {
     id?: string,
     tags: string[],
     imageUrls: string[],
@@ -47,18 +85,5 @@ export type ProjectFormDataForSumbit = Omit<PrismaProject, 'id' | 'fechaCreacion
         cantidadUsadaPorPieza: number;
         costoUnitarioAlMomentoDelCalculo?: number;
     }[];
-     resultadosCalculados?: {
-        costoMaterialPieza: number;
-        costoElectricidadPieza: number;
-        costoAmortizacionPieza: number;
-        costoLaborOperativaPieza: number;
-        costoLaborPostProcesadoPieza: number;
-        costoTotalAccesoriosPieza: number;
-        subTotalCostoDirectoPieza: number;
-        costoContingenciaFallasPieza: number;
-        costoTotalPieza: number;
-        costoTotalLote: number;
-        precioVentaDirecta?: number;
-        precioVentaMercadoLibre?: number;
-  };
+     resultadosCalculados?: Project['resultadosCalculados'];
 };

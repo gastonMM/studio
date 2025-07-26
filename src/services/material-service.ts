@@ -1,45 +1,25 @@
-import prisma from "@/lib/db";
+import { mockStore } from "./mock-store";
 import type { Material, MaterialFormData } from "@/types";
 
 export async function getMaterials(): Promise<Material[]> {
-  return prisma.material.findMany({
-    orderBy: {
-      nombreMaterial: 'asc'
-    }
-  });
+  return mockStore.getMaterials();
 }
 
-export async function getMaterialById(id: string): Promise<Material | null> {
-  return prisma.material.findUnique({
-    where: { id },
-  });
+export async function getMaterialById(id: string): Promise<Material | undefined> {
+  return mockStore.getMaterialById(id);
 }
 
 export async function createMaterial(formData: MaterialFormData): Promise<Material> {
     if (!formData.nombreMaterial || formData.costoPorKg <= 0) {
         throw new Error("Datos inválidos.");
     }
-    return prisma.material.create({
-        data: formData
-    });
+    return mockStore.createMaterial(formData);
 }
 
-export async function updateMaterial(id: string, formData: Partial<MaterialFormData>): Promise<Material | null> {
-    return prisma.material.update({
-        where: { id },
-        data: {
-          ...formData,
-          fechaUltimaActualizacionCosto: new Date(),
-        },
-    });
+export async function updateMaterial(id: string, formData: Partial<MaterialFormData>): Promise<Material | undefined> {
+    return mockStore.updateMaterial(id, formData);
 }
 
 export async function deleteMaterial(id: string): Promise<boolean> {
-    try {
-        await prisma.material.delete({ where: { id } });
-        return true;
-    } catch (error) {
-        console.error(error);
-        return false;
-    }
+  return mockStore.deleteMaterial(id);
 }
