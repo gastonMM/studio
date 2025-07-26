@@ -1,82 +1,121 @@
-# Calculadora Costos 3D Pro
+# Calculadora de Costos 3D Pro - Documentación Completa
 
-## Documentación de la Aplicación y API
+## 1. Visión General
 
-Esta aplicación web integral, **Calculadora Costos 3D Pro**, está diseñada para ayudar a profesionales y entusiastas de la impresión 3D a calcular los costos de producción de piezas y determinar precios de venta sugeridos de manera precisa.
+**Calculadora de Costos 3D Pro** es una aplicación web integral diseñada para asistir a profesionales y entusiastas de la impresión 3D en la tarea de calcular con precisión los costos de producción y determinar precios de venta sugeridos.
 
-La aplicación permite gestionar todos los recursos necesarios para la impresión 3D: materiales, accesorios y perfiles de impresora. Posteriormente, estos recursos se utilizan para realizar cálculos detallados de costos por proyecto.
-
----
-
-### Secciones Principales de la Aplicación
-
-La aplicación se organiza en las siguientes secciones principales, accesibles desde el menú de navegación lateral:
-
-- **Gestión de Materiales** (`/materials`): Permite gestionar materiales de impresión (CRUD). Los campos clave incluyen Nombre, Costo por Kg, Peso Spool Comprado, Densidad y Diámetro. Estos datos son fundamentales para calcular el Costo de Material en cada proyecto.
-
-- **Gestión de Accesorios** (`/accessories`): Permite gestionar componentes adicionales (CRUD). Los campos clave incluyen Nombre, Precio del Paquete y Unidades por Paquete, utilizados para calcular el Costo por Unidad y añadir un costo adicional preciso por accesorio.
-
-- **Perfiles de Impresora** (`/printer-profiles`): Centraliza la configuración de parámetros de la impresora. Los campos clave incluyen Consumo Energético, Costo KWh Electricidad, Costo Adquisición Impresora, Vida Útil Estimada (Horas), Porcentaje de Fallas y Costo Hora Labor. Estos datos son cruciales para calcular los costos de electricidad, amortización, fallas y labor.
-
-- **Nueva Calculación** (`/projects/calculate`): Permite introducir los parámetros de una pieza para obtener un desglose completo de costos. Después de completar los datos del proyecto, seleccionar material y perfil de impresora, y opcionalmente añadir accesorios, la aplicación calcula y muestra los resultados. Si el resultado es satisfactorio, se puede guardar el proyecto en el Catálogo.
-
-- **Catálogo** (`/projects`): Muestra todos los proyectos guardados. Cada proyecto se presenta en una tarjeta con vista rápida de nombre, costo total y precio de venta sugerido. Las tarjetas incluyen opciones para Editar/Recalcular, Eliminar y un botón global para Recalcular Todos los costos del catálogo.
+La aplicación centraliza la gestión de todos los recursos y parámetros que influyen en el costo final de una pieza impresa, permitiendo un control financiero detallado y una toma de decisiones informada.
 
 ---
 
-### Detalle del Cálculo de Costos
+## 2. Secciones Principales de la Aplicación
 
-El cálculo de costos considera varios factores para asegurar la precisión:
+La navegación se estructura en torno a dos áreas principales: el **Catálogo de Proyectos** y la **Configuración** de recursos.
 
-1.  **Costo del Material por Pieza:** Calculado en base al Costo por Kg del material y el peso de la pieza en gramos.
-2.  **Costo de Electricidad por Pieza:** Basado en el consumo energético de la impresora, tiempo de impresión y costo por KWh.
-3.  **Costo de Amortización de la Impresora:** Distribuye el costo de adquisición de la impresora a lo largo de su vida útil estimada por hora.
-4.  **Costo de Labor Operativa:** Cuantifica el costo del tiempo dedicado a la preparación de la impresión.
-5.  **Costo de Labor de Post-Procesado:** Cuantifica el costo del trabajo manual después de la impresión (soportes, lijado, etc.).
-6.  **Costo Total de Accesorios:** Suma del costo de todos los accesorios utilizados en el proyecto.
+### 2.1. Catálogo de Proyectos (`/projects`)
+Es la pantalla principal y el centro de operaciones. Muestra todos los proyectos guardados en tarjetas interactivas.
 
-Los cálculos finales incluyen el Subtotal Costo Directo, el Costo de Contingencia por Fallas (un margen para impresiones fallidas), el Costo Total por Pieza (costo final de producción) y el Precio de Venta Sugerido por Pieza (aplicando el margen de ganancia deseado).
+- **Visualización en Tarjetas:** Cada proyecto presenta una vista rápida con su imagen, nombre, costo total y precios de venta sugeridos.
+- **Carrusel de Imágenes:** Soporte para múltiples imágenes por proyecto.
+- **Filtrado y Búsqueda:**
+    - **Búsqueda por Nombre:** Un campo de texto para encontrar proyectos rápidamente.
+    - **Filtrado por Etiquetas:** Permite seleccionar una o más etiquetas para acotar los resultados.
+- **Acciones por Proyecto:**
+    - **Editar/Recalcular:** Abre el proyecto en el formulario de cálculo para ajustar parámetros y ver el impacto de los costos actualizados.
+    - **Eliminar:** Borra el proyecto del catálogo.
+- **Acciones Globales:**
+    - **Recalcular Todos:** Un botón que actualiza los costos de *todos* los proyectos con los precios más recientes de materiales, perfiles, etc.
+    - **Administrar Etiquetas:** Abre un gestor para crear, editar y eliminar las etiquetas usadas en los proyectos.
+    - **Nueva Calculación:** Acceso directo para crear un nuevo proyecto.
+
+### 2.2. Nueva Calculación (`/projects/calculate`)
+El corazón de la aplicación. Un formulario detallado para introducir los parámetros de una pieza y obtener un desglose completo de costos.
+
+- **Datos del Proyecto:** Nombre, descripción, imágenes y etiquetas.
+- **Parámetros de Impresión:**
+    - Selección de **Material** y **Perfil de Impresora**.
+    - Peso de la pieza y tiempo de impresión.
+    - Tiempos de labor (operativa y post-procesado).
+- **Accesorios:** Permite añadir componentes adicionales (tornillos, imanes, etc.) con sus cantidades.
+- **Perfil de Venta:** Selección de un perfil para calcular los precios de venta en diferentes canales (ej: Venta Directa, Mercado Libre).
+- **Resultados en Tiempo Real:** Al presionar "Calcular", se muestra un desglose detallado de todos los costos y los precios de venta sugeridos.
+- **Guardado:** Si el cálculo es satisfactorio, se puede guardar el proyecto, que aparecerá en el Catálogo.
+
+### 2.3. Configuración (Menú Desplegable)
+Esta sección agrupa la gestión de todos los recursos y perfiles que alimentan la calculadora.
+
+#### 2.3.1. Gestión de Materiales (`/materials`)
+Permite la gestión (CRUD) de los filamentos o resinas.
+- **Campos Clave:** Nombre, Costo por Kg, Peso del Spool (bobina), URL del producto.
+
+#### 2.3.2. Gestión de Accesorios (`/accessories`)
+Permite la gestión (CRUD) de componentes adicionales.
+- **Campos Clave:** Nombre, Precio del Paquete, Unidades por Paquete, URL del producto. El costo por unidad se calcula automáticamente.
+
+#### 2.3.3. Perfiles de Impresora (`/printer-profiles`)
+Configuración de los parámetros de cada impresora.
+- **Campos Clave:** Nombre del perfil, Modelo, Consumo energético (Watts), Costo de adquisición, Vida útil (horas), Porcentaje de fallas, y Costos de hora de labor (operativa y post-procesado).
+- **Asociación Clave:** Cada perfil de impresora debe estar asociado a un **Perfil de Electricidad**.
+
+#### 2.3.4. Perfiles de Electricidad (`/electricity-profiles`)
+Permite definir diferentes tarifas eléctricas.
+- **Campos Clave:** Nombre del perfil (ej: "Tarifa Edesur"), Consumo total de la factura (kWh) y Monto total pagado ($). El costo por kWh se calcula automáticamente.
+
+#### 2.3.5. Perfiles de Venta (`/sales-profiles`)
+Configuración de los canales de venta y sus costos asociados.
+- **Campos Clave:** Nombre del perfil (ej: "Venta General", "Productos Premium").
+- **Venta Directa:** Margen de ganancia deseado (%).
+- **Mercado Libre:** Comisión variable (%) y Cargo fijo ($) por venta.
 
 ---
 
-### Configuración de la Base de Datos (PostgreSQL)
+## 3. Detalle del Cálculo de Costos
 
-La aplicación está configurada para funcionar con una base de datos PostgreSQL utilizando Prisma como ORM. Para conectar la aplicación a tu base de datos, sigue estos pasos:
+La lógica de cálculo (`src/lib/calculation.ts`) combina todos los parámetros para ofrecer un resultado preciso.
 
-1.  **Crea un archivo `.env`** en la raíz del proyecto.
-2.  **Añade la variable de entorno `DATABASE_URL`** a tu archivo `.env`. El formato debe ser el siguiente:
-    ```
-    DATABASE_URL="postgresql://USUARIO:CONTRASEÑA@HOST:PUERTO/NOMBRE_BASE_DE_DATOS?schema=public"
-    ```
-    Reemplaza `USUARIO`, `CONTRASEÑA`, `HOST`, `PUERTO` y `NOMBRE_BASE_DE_DATOS` con las credenciales de tu base de datos PostgreSQL.
+1.  **Costo de Material:** `(CostoPorKg / 1000) * PesoPiezaGramos`
+2.  **Costo de Electricidad:** `(ConsumoWatts / 1000) * TiempoImpresionHoras * CostoPorKWh`
+3.  **Costo de Amortización:** `(CostoAdquisicionImpresora / VidaUtilHoras) * TiempoImpresionHoras`
+4.  **Costos de Labor:** Se multiplica el tiempo de labor (operativa y post-procesado) por la tarifa/hora definida en el perfil de la impresora.
+5.  **Costo de Accesorios:** Suma del `CostoPorUnidad` de cada accesorio multiplicado por la cantidad usada.
+6.  **Subtotal y Contingencia:** Se suman todos los costos directos para obtener un subtotal. A este se le aplica el **Porcentaje de Fallas** para obtener el **Costo de Contingencia**.
+7.  **Costo Total por Pieza:** `Subtotal + CostoContingencia`
 
-3.  **Crea la estructura de la base de datos**. El archivo `schema.sql` en la raíz del proyecto contiene todas las sentencias `CREATE TABLE` necesarias. Puedes ejecutar este script en tu base de datos para crear todas las tablas requeridas.
+### Cálculo de Precios de Venta
 
-4.  **Instala las dependencias y genera el cliente de Prisma**:
-    ```bash
-    npm install
-    ```
-    El comando `npm install` ejecutará automáticamente `prisma generate`, que crea el cliente de Prisma basado en tu esquema.
-
----
-
-### Arquitectura y Flujo de Datos
-
-- **Tecnologías:** Frontend con Next.js (React), TypeScript, Tailwind CSS y ShadCN. Backend con Next.js API Routes y Server Actions. La capa de datos se gestiona con **Prisma** para interactuar con una base de datos PostgreSQL.
-
-- **Flujo de Datos (Ejemplo: Guardar un Material):** Un usuario interactúa con el formulario, el componente cliente llama a una Server Action (`saveMaterialAction`) que se ejecuta en el servidor. Esta Server Action invoca una función en la capa de servicio (`material-service.ts`) que, a su vez, utiliza el **cliente de Prisma** para guardar el material en la base de datos. La Server Action responde con un estado de éxito y el componente cliente redirige y muestra una notificación.
+- **Precio Venta Directa:** `CostoTotalPieza * (1 + (MargenGanancia / 100))`
+- **Precio Venta Mercado Libre:** Se calcula para que, después de descontar la **comisión variable** y el **cargo fijo** de ML, el vendedor reciba el `CostoTotalPieza` más su ganancia deseada.
+  - **Fórmula:** `(CostoTotalPieza + GananciaDeseada + CargoFijoML) / (1 - (ComisionML / 100))`
 
 ---
 
-### API Endpoints
+## 4. Arquitectura y Flujo de Datos
 
-- **Recalcular Todos los Proyectos** (`/api/recalculate-all`)
-    - **Método:** `GET`
-    - **Función:** Permite actualizar los costos de todos los proyectos guardados utilizando los precios más recientes de materiales, perfiles, etc.
-    - **Parámetros de Consulta:** `secret` (obligatorio, clave secreta para autorización. En desarrollo: `SUPER_SECRET_KEY`).
-    - **Respuesta Exitosa (200 OK):** JSON con `success: true`, `message`, y `count` de proyectos actualizados.
-    - **Respuestas de Error:** 401 No Autorizado (clave secreta incorrecta o faltante) o 500 Error Interno del Servidor.
+- **Tecnologías:**
+    - **Frontend:** Next.js (con App Router), React, TypeScript.
+    - **UI:** Tailwind CSS y ShadCN para componentes.
+    - **Estado y Lógica de Cliente:** React Hook Form para formularios.
+- **Backend y Datos:**
+    - **Lógica de Servidor:** Next.js Server Actions.
+    - **Capa de Datos:** Se utiliza un **almacenamiento en memoria (mock store)** para simular una base de datos, lo que permite un desarrollo rápido sin necesidad de configurar una base de datos externa. **Importante: los datos se reinician con cada recarga del servidor.**
+
+- **Flujo de Datos (Ejemplo: Guardar un Material):**
+    1. El usuario rellena el formulario en `/materials/new`.
+    2. El componente cliente (`MaterialForm.tsx`) valida los datos y llama a una **Server Action** (`saveMaterialAction`).
+    3. La Server Action se ejecuta en el servidor y llama a la función `createMaterial` del servicio correspondiente (`material-service.ts`).
+    4. El servicio interactúa con el `mockStore` para crear el registro en memoria.
+    5. La Server Action devuelve una respuesta de éxito, y el cliente redirige y muestra una notificación (`toast`).
 
 ---
 
-Para más detalles técnicos sobre la implementación de los cálculos, consulte el archivo `src/lib/calculation.ts`. Para el esquema de la base de datos, consulte `prisma/schema.prisma`.
+## 5. API Endpoints
+
+### 5.1. Recalcular Todos los Proyectos
+
+- **Ruta:** `/api/recalculate-all`
+- **Método:** `GET`
+- **Función:** Expone la funcionalidad del botón "Recalcular Todos" para que pueda ser invocada a través de una URL, ideal para automatización.
+- **Parámetros de Consulta:**
+    - `secret`: Una clave secreta para autorizar la ejecución. En desarrollo: `SUPER_SECRET_KEY`.
+- **Respuesta Exitosa (200 OK):** JSON con `success: true` y la cantidad de proyectos actualizados.
+- **Respuesta de Error:** 401 (No autorizado) o 500 (Error interno).
