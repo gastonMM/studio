@@ -174,21 +174,51 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const currentImageUrls = form.getValues("imageUrls") || [];
       for (const file of Array.from(files)) {
-        if (file.size > 2 * 1024 * 1024) { // 2MB limit
-          toast({ title: "Error", description: `La imagen ${file.name} pesa más de 2MB.`, variant: "destructive" });
+        if (file.size > 4 * 1024 * 1024) { // 4MB limit
+          toast({ title: "Error", description: `La imagen ${file.name} pesa más de 4MB.`, variant: "destructive" });
           continue;
         }
+
         const reader = new FileReader();
-        reader.onloadend = () => {
-          form.setValue("imageUrls", [...currentImageUrls, reader.result as string]);
+        reader.onload = (e) => {
+          const img = document.createElement('img');
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1024;
+            const MAX_HEIGHT = 1024;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(img, 0, 0, width, height);
+                const pngDataUrl = canvas.toDataURL('image/png', 0.9); // 0.9 quality
+                
+                const currentImageUrls = form.getValues("imageUrls") || [];
+                form.setValue("imageUrls", [...currentImageUrls, pngDataUrl]);
+            }
+          };
+          img.src = e.target?.result as string;
         };
         reader.readAsDataURL(file);
       }
     }
-     // Reset file input to allow re-uploading the same file
-    if(fileInputRef.current) {
+    // Reset file input to allow re-uploading the same file
+    if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
@@ -408,7 +438,7 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
                               <Upload className="mr-2 h-4 w-4" />
                               Seleccionar Imágenes
                           </Button>
-                          <FormDescription>Puedes subir varias imágenes para el catálogo. Límite de 2MB por imagen.</FormDescription>
+                          <FormDescription>Las imágenes se convertirán a PNG y se redimensionarán a 1024px como máximo.</FormDescription>
                       </CardContent>
                   </Card>
                   <FormMessage />
