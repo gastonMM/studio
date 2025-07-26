@@ -2,8 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
@@ -27,24 +26,24 @@ model Material {
 }
 
 model Accessory {
-  id                   String                 @id @default(cuid())
-  nombreAccesorio      String                 @unique
-  precioPaqueteObtenido Float
-  unidadesPorPaqueteEnLink Int                  @default(1)
-  costoPorUnidad       Float
-  urlProducto          String?
-  notasAdicionales     String?
+  id                            String   @id @default(cuid())
+  nombreAccesorio               String   @unique
+  precioPaqueteObtenido         Float
+  unidadesPorPaqueteEnLink      Int      @default(1)
+  costoPorUnidad                Float
+  urlProducto                   String?
+  notasAdicionales              String?
   fechaUltimaActualizacionCosto DateTime @default(now()) @updatedAt
-  projects             AccessoryInProject[]
+  projects                      AccessoryInProject[]
 }
 
 model ElectricityProfile {
-  id                 String           @id @default(cuid())
-  nombrePerfil       String           @unique
-  consumoMensualKWh  Float
-  costoTotalFactura  Float
-  costoPorKWh        Float
-  printerProfiles    PrinterProfile[]
+  id                  String           @id @default(cuid())
+  nombrePerfil        String           @unique
+  consumoMensualKWh   Float
+  costoTotalFactura   Float
+  costoPorKWh         Float
+  PrinterProfile      PrinterProfile[]
 }
 
 model PrinterProfile {
@@ -52,15 +51,14 @@ model PrinterProfile {
   nombrePerfilImpresora             String    @unique
   modeloImpresora                   String?
   consumoEnergeticoImpresoraWatts   Int?
+  electricityProfileId              String
+  electricityProfile                ElectricityProfile @relation(fields: [electricityProfileId], references: [id])
   costoAdquisicionImpresora         Float?
   vidaUtilEstimadaHorasImpresora    Int?
   porcentajeFallasEstimado          Float?
   costoHoraLaborOperativa           Float?
   costoHoraLaborPostProcesado       Float?
   fechaUltimaActualizacionConfig    DateTime  @default(now()) @updatedAt
-  
-  electricityProfileId              String
-  electricityProfile                ElectricityProfile @relation(fields: [electricityProfileId], references: [id])
   projects                          Project[]
 }
 
@@ -76,44 +74,40 @@ model SalesProfile {
 model Tag {
   id       String    @id @default(cuid())
   name     String    @unique
-  color    String?
+  color    String
   projects Project[] @relation("ProjectTags")
 }
 
 model Project {
-  id                   String    @id @default(cuid())
-  nombreProyecto       String
-  descripcionProyecto  String?
-  imageUrls            Json[]
-  fechaCreacion        DateTime  @default(now())
-  fechaUltimoCalculo   DateTime  @default(now()) @updatedAt
-
-  materialUsadoId             String
-  material                    Material @relation(fields: [materialUsadoId], references: [id])
-
-  configuracionImpresoraIdUsada String
-  printerProfile              PrinterProfile @relation(fields: [configuracionImpresoraIdUsada], references: [id])
+  id                              String               @id @default(cuid())
+  nombreProyecto                  String
+  descripcionProyecto             String?
+  imageUrls                       Json[]
+  materialUsadoId                 String
+  material                        Material             @relation(fields: [materialUsadoId], references: [id])
+  configuracionImpresoraIdUsada   String
+  printerProfile                  PrinterProfile       @relation(fields: [configuracionImpresoraIdUsada], references: [id])
+  perfilVentaIdUsado              String
+  salesProfile                    SalesProfile         @relation(fields: [perfilVentaIdUsado], references: [id])
   
-  perfilVentaIdUsado           String
-  salesProfile                 SalesProfile @relation(fields: [perfilVentaIdUsado], references: [id])
-  
-  inputsOriginales             Json
-  resultadosCalculados         Json?
+  inputsOriginales                Json // Store original inputs like weight, time, etc.
+  resultadosCalculados            Json // Store all calculated costs and prices
 
-  tags                         Tag[] @relation("ProjectTags")
-  accesoriosUsadosEnProyecto   AccessoryInProject[]
+  accesoriosUsadosEnProyecto      AccessoryInProject[]
+  tags                            Tag[]                @relation("ProjectTags")
+
+  fechaCreacion                   DateTime             @default(now())
+  fechaUltimoCalculo              DateTime             @default(now()) @updatedAt
 }
 
 model AccessoryInProject {
   id                                String    @id @default(cuid())
+  projectId                         String
+  project                           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  accesorioId                       String
+  accessory                         Accessory @relation(fields: [accesorioId], references: [id], onDelete: Cascade)
   cantidadUsadaPorPieza             Int
   costoUnitarioAlMomentoDelCalculo  Float?
-
-  projectId                       String
-  project                         Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  accesorioId                     String
-  accessory                       Accessory @relation(fields: [accesorioId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, accesorioId])
 }
