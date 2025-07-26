@@ -57,7 +57,7 @@ La aplicación está organizada en varias secciones principales, accesibles desd
 - **Función:** Muestra todos los proyectos que han sido guardados desde la sección "Nueva Calculación". Funciona como un catálogo de productos finalizados.
 - **Características:**
     - **Vista de Tarjetas:** Cada proyecto se muestra en una tarjeta visualmente atractiva.
-    - **Carrusel de Imágenes:** Si un proyecto tiene múltiples imágenes, se muestran en un carrusel interactivo.
+    - **Carrusel de Imágenes:** Si un proyecto tiene múltiples imágenes, se muestran en un carrusel interactivo con botones de navegación (flechas a izquierda y derecha) que permiten al usuario desplazarse entre ellas.
     - **Información Rápida:** Se muestra el nombre, costo total y precio de venta sugerido.
     - **Acciones:** Cada tarjeta tiene botones para:
         - **Editar/Recalcular:** Abre el proyecto en el formulario de cálculo para ajustar parámetros.
