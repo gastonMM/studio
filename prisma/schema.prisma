@@ -12,63 +12,101 @@ datasource db {
 }
 
 model Material {
-  id                            String   @id @default(cuid())
-  nombreMaterial                String   @unique
-  costoPorKg                    Float
-  pesoSpoolCompradoGramos       Int      @default(1000)
-  urlProducto                   String?
-  selectorPrecioCSS             String?
-  densidad                      Float?
-  diametro                      Float?
-  notasAdicionales              String?
-  fechaUltimaActualizacionCosto DateTime @default(now()) @updatedAt
-  projects                      Project[]
+  id                                String   @id @default(cuid())
+  nombreMaterial                    String
+  costoPorKg                        Float
+  pesoSpoolCompradoGramos           Int      @default(1000)
+  urlProducto                       String?
+  selectorPrecioCSS                 String?
+  densidad                          Float?
+  diametro                          Float?
+  notasAdicionales                  String?
+  fechaUltimaActualizacionCosto     DateTime @default(now()) @updatedAt
+  proyectosUtilizandoEsteMaterial   Project[]
 }
 
 model Accessory {
-  id                            String   @id @default(cuid())
-  nombreAccesorio               String   @unique
-  precioPaqueteObtenido         Float
-  unidadesPorPaqueteEnLink      Int      @default(1)
-  costoPorUnidad                Float
-  urlProducto                   String?
-  notasAdicionales              String?
-  fechaUltimaActualizacionCosto DateTime @default(now()) @updatedAt
-  projects                      AccessoryInProject[]
+  id                             String               @id @default(cuid())
+  nombreAccesorio                String               @unique
+  precioPaqueteObtenido          Float
+  unidadesPorPaqueteEnLink       Int
+  costoPorUnidad                 Float
+  urlProducto                    String?
+  notasAdicionales               String?
+  fechaUltimaActualizacionCosto  DateTime             @default(now()) @updatedAt
+  proyectos                      AccessoryInProject[]
 }
 
 model ElectricityProfile {
-  id                  String           @id @default(cuid())
-  nombrePerfil        String           @unique
-  consumoMensualKWh   Float
-  costoTotalFactura   Float
-  costoPorKWh         Float
-  PrinterProfile      PrinterProfile[]
+  id                   String           @id @default(cuid())
+  nombrePerfil         String           @unique
+  consumoMensualKWh    Float
+  costoTotalFactura    Float
+  costoPorKWh          Float
+  printerProfiles      PrinterProfile[]
 }
 
 model PrinterProfile {
-  id                                String    @id @default(cuid())
-  nombrePerfilImpresora             String    @unique
-  modeloImpresora                   String?
-  consumoEnergeticoImpresoraWatts   Int?
-  electricityProfileId              String
-  electricityProfile                ElectricityProfile @relation(fields: [electricityProfileId], references: [id])
-  costoAdquisicionImpresora         Float?
-  vidaUtilEstimadaHorasImpresora    Int?
-  porcentajeFallasEstimado          Float?
-  costoHoraLaborOperativa           Float?
-  costoHoraLaborPostProcesado       Float?
-  fechaUltimaActualizacionConfig    DateTime  @default(now()) @updatedAt
-  projects                          Project[]
+  id                                  String    @id @default(cuid())
+  nombrePerfilImpresora               String    @unique
+  modeloImpresora                     String?
+  consumoEnergeticoImpresoraWatts     Int?
+  costoAdquisicionImpresora           Float?
+  vidaUtilEstimadaHorasImpresora      Int?
+  porcentajeFallasEstimado            Float?
+  costoHoraLaborOperativa             Float?
+  costoHoraLaborPostProcesado         Float?
+  fechaUltimaActualizacionConfig      DateTime  @default(now()) @updatedAt
+  
+  electricityProfileId                String
+  electricityProfile                  ElectricityProfile @relation(fields: [electricityProfileId], references: [id])
+  
+  projects                            Project[]
 }
 
 model SalesProfile {
-  id                      String    @id @default(cuid())
-  nombrePerfil            String    @unique
-  margenGananciaDirecta   Float     @default(30)
-  comisionMercadoLibre    Float     @default(15)
-  costoFijoMercadoLibre   Float     @default(800)
-  projects                Project[]
+  id                       String    @id @default(cuid())
+  nombrePerfil             String    @unique
+  margenGananciaDirecta    Float     // Porcentaje, ej: 30 para 30%
+  comisionMercadoLibre     Float     // Porcentaje, ej: 15 para 15%
+  costoFijoMercadoLibre    Float     // Costo fijo en ARS
+  projects                 Project[]
+}
+
+model Project {
+  id                                String    @id @default(cuid())
+  nombreProyecto                    String
+  descripcionProyecto               String?
+  imageUrls                         Json?     @default("[]")
+  fechaCreacion                     DateTime  @default(now())
+  fechaUltimoCalculo                DateTime  @default(now()) @updatedAt
+
+  materialUsadoId                   String
+  material                          Material  @relation(fields: [materialUsadoId], references: [id])
+
+  configuracionImpresoraIdUsada     String
+  printerProfile                    PrinterProfile @relation(fields: [configuracionImpresoraIdUsada], references: [id])
+
+  perfilVentaIdUsado                String
+  salesProfile                      SalesProfile @relation(fields: [perfilVentaIdUsado], references: [id])
+  
+  inputsOriginales                  Json
+  resultadosCalculados              Json?
+
+  accesoriosUsadosEnProyecto        AccessoryInProject[]
+  tags                              Tag[]     @relation("ProjectTags")
+}
+
+model AccessoryInProject {
+  id                                 String   @id @default(cuid())
+  cantidadUsadaPorPieza              Int
+  costoUnitarioAlMomentoDelCalculo   Float?
+  
+  projectId                          String
+  project                            Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  accesorioId                        String
+  accessory                          Accessory @relation(fields: [accesorioId], references: [id], onDelete: Cascade)
 }
 
 model Tag {
@@ -76,38 +114,4 @@ model Tag {
   name     String    @unique
   color    String
   projects Project[] @relation("ProjectTags")
-}
-
-model Project {
-  id                              String               @id @default(cuid())
-  nombreProyecto                  String
-  descripcionProyecto             String?
-  imageUrls                       Json[]
-  materialUsadoId                 String
-  material                        Material             @relation(fields: [materialUsadoId], references: [id])
-  configuracionImpresoraIdUsada   String
-  printerProfile                  PrinterProfile       @relation(fields: [configuracionImpresoraIdUsada], references: [id])
-  perfilVentaIdUsado              String
-  salesProfile                    SalesProfile         @relation(fields: [perfilVentaIdUsado], references: [id])
-  
-  inputsOriginales                Json // Store original inputs like weight, time, etc.
-  resultadosCalculados            Json // Store all calculated costs and prices
-
-  accesoriosUsadosEnProyecto      AccessoryInProject[]
-  tags                            Tag[]                @relation("ProjectTags")
-
-  fechaCreacion                   DateTime             @default(now())
-  fechaUltimoCalculo              DateTime             @default(now()) @updatedAt
-}
-
-model AccessoryInProject {
-  id                                String    @id @default(cuid())
-  projectId                         String
-  project                           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  accesorioId                       String
-  accessory                         Accessory @relation(fields: [accesorioId], references: [id], onDelete: Cascade)
-  cantidadUsadaPorPieza             Int
-  costoUnitarioAlMomentoDelCalculo  Float?
-
-  @@unique([projectId, accesorioId])
 }
