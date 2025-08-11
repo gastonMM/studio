@@ -1,13 +1,18 @@
 'use server';
 
-import { genkit } from 'genkit';
+import { genkit, configureGenkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
-import { firebase } from '@genkit-ai/firebase/plugin';
+import { enableFirebaseTelemetry } from '@genkit-ai/firebase';
 
+// NOTA: El plugin de Firebase se utiliza para la telemetría y el tracing de
+// los flujos de Genkit (IA). NO se utiliza para la base de datos principal de
+// la aplicación (proyectos, materiales, etc.), que se gestiona a través de
+// los servicios en /src/services.
 export const ai = genkit({
   plugins: [
-    firebase(),
     googleAI(),
   ],
   enableTracingAndMetrics: true,
 });
+
+enableFirebaseTelemetry();
