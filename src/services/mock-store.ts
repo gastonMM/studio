@@ -40,54 +40,8 @@ class MockStore {
   }
 
   private initDefaultData() {
-    // Default Electricity Profile
-    const defaultElectricityId = generateId();
-    this.createElectricityProfile({
-      id: defaultElectricityId,
-      nombrePerfil: "Tarifa General",
-      consumoMensualKWh: 150,
-      costoTotalFactura: 8500
-    });
-
-    // Default Printer Profile
-    const defaultPrinterProfileId = generateId();
-    this.createPrinterProfile({
-        id: defaultPrinterProfileId,
-        nombrePerfilImpresora: "Impresora por Defecto",
-        modeloImpresora: "Ender 3 Pro",
-        consumoEnergeticoImpresoraWatts: 200,
-        costoAdquisicionImpresora: 1200000,
-        vidaUtilEstimadaHorasImpresora: 4000,
-        porcentajeFallasEstimado: 5,
-        costoHoraLaborOperativa: 2500,
-        costoHoraLaborPostProcesado: 2000,
-        electricityProfileId: defaultElectricityId,
-    });
-    
-    // Default Sales Profile
-    const defaultSalesProfileId = generateId();
-    this.createSalesProfile({
-        id: defaultSalesProfileId,
-        nombrePerfil: "Perfil General",
-        margenGananciaDirecta: 30,
-        comisionMercadoLibre: 15,
-        costoFijoMercadoLibre: 800
-    });
-
-    // Default Material
-    this.createMaterial({
-        nombreMaterial: 'PLA Genérico Blanco',
-        costoPorKg: 15000,
-        pesoSpoolCompradoGramos: 1000,
-        densidad: 1.24,
-        diametro: 1.75
-    });
-
-     // Default Tag
-     this.createTag({ name: 'Llavero', color: generateRandomColor() });
-     this.createTag({ name: 'Decoración', color: generateRandomColor() });
-     this.createTag({ name: 'Utilidad', color: generateRandomColor() });
-
+    // This method is now empty to avoid loading default data.
+    // You can add default data here for testing if needed.
   }
 
   // Material Methods
