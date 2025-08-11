@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { PlusCircle, Trash2, Loader2, CalculatorIcon, Upload, X, Tags as TagsIcon } from "lucide-react";
+import { PlusCircle, Trash2, Loader2, CalculatorIcon, Upload, X, Tags as TagsIcon, WandSparkles } from "lucide-react";
 import Image from "next/image";
 import { calculateProjectCost } from "@/lib/calculation";
 
@@ -36,6 +36,7 @@ import { fetchElectricityProfiles } from "@/app/electricity-profiles/actions";
 import { fetchSalesProfiles } from "@/app/sales-profiles/actions";
 import { fetchTags, saveTagAction } from "@/app/tags/actions";
 import { saveProjectAction } from "../../actions";
+import { generateProjectDetails } from "@/ai/dev";
 import { cn } from "@/lib/utils";
 
 const hhmmToHours = (hhmm: string): number => {
@@ -70,6 +71,7 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [calculatedResults, setCalculatedResults] = useState<Project["resultadosCalculados"] | null>(null);
   
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -164,7 +166,7 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
     name: "accesoriosUsadosEnProyecto",
   });
   
-  const { fields: tagFields, append: appendTag, remove: removeTag } = useFieldArray({
+  const { fields: tagFields, append: appendTag, remove: removeTag, replace: replaceTags } = useFieldArray({
       control: form.control,
       name: "tags",
   });
@@ -278,6 +280,45 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
     const tag = allTags.find(t => t.name === tagName);
     return tag?.color;
   };
+  
+  const handleGenerateWithAi = async () => {
+    const images = form.getValues("imageUrls");
+    if (!images || images.length === 0) {
+      toast({
+        title: "Imágenes requeridas",
+        description: "Debes subir al menos una imagen para usar la IA.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsGeneratingAi(true);
+    try {
+      const result = await generateProjectDetails({
+        title: form.getValues("nombreProyecto"),
+        images,
+      });
+
+      form.setValue("nombreProyecto", result.title, { shouldValidate: true });
+      form.setValue("descripcionProyecto", result.description);
+      replaceTags(result.tags);
+
+      toast({
+        title: "¡Contenido generado!",
+        description: "Se han actualizado el título, la descripción y las etiquetas.",
+      });
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error al generar el contenido.";
+      toast({
+        title: "Error de IA",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
 
   const processAndCalculate = (values: z.infer<typeof projectSchema>) => {
     const processedValues = {
@@ -378,7 +419,13 @@ export function CalculateProjectForm({ projectToEdit }: { projectToEdit?: Projec
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nombre del Proyecto</FormLabel>
-                      <FormControl><Input placeholder="Ej: Llavero personalizado" {...field} /></FormControl>
+                      <div className="flex items-center gap-2">
+                          <FormControl><Input placeholder="Ej: Llavero personalizado" {...field} /></FormControl>
+                          <Button type="button" variant="outline" size="icon" onClick={handleGenerateWithAi} disabled={isGeneratingAi}>
+                            {isGeneratingAi ? <Loader2 className="h-4 w-4 animate-spin" /> : <WandSparkles className="h-4 w-4" />}
+                            <span className="sr-only">Generar con IA</span>
+                          </Button>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
