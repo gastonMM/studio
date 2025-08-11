@@ -36,7 +36,7 @@ import { fetchElectricityProfiles } from "@/app/electricity-profiles/actions";
 import { fetchSalesProfiles } from "@/app/sales-profiles/actions";
 import { fetchTags, saveTagAction } from "@/app/tags/actions";
 import { saveProjectAction } from "../../actions";
-import { generateProjectDetails } from "@/ai/dev";
+import { generateProjectDetails } from "@/ai/flows/generate-project-details-flow";
 import { cn } from "@/lib/utils";
 
 const hhmmToHours = (hhmm: string): number => {
